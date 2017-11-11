@@ -7,10 +7,6 @@ Based on: An Efficient Representation for Irradiance Environment Maps.
 ref: http://graphics.stanford.edu/papers/envmap/  
 
 
-Purpose:
-* to avoid load screens when transitioning from level to level.
-* to avoid loading all your level assets in memory and only load levels as you need.
-
 Screenshots
 ---
 ![alt tag](https://github.com/Lumak/Urho3D-LightProbe/blob/master/screenshot/lightprobescreen1.png)
