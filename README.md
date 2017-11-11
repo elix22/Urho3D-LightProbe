@@ -12,7 +12,7 @@ In this example, there are four lightprobes in the scene placed near objects tha
 1) CubeCapture class generates cubemap textures.
 2) LightProbe class maps the texture onto a unit box and generate SH coefficients onto a spherical space.
 3) LightProbeCreator class gathers all SH coefficients from the LightProbe class and packs the information into a single ShprobeData.png file.
-4) shader program reads the ShprobeData.png data and applies eqn. 13 mentioned in the ref paper above.
+4) shader program reads the ShprobeData.png data and applies eqn. 13 mentioned in the ref above.
   
 Coefficient generation takes about **200 msec.** for the scene. Your results may vary. The example does not generate the coefficients automatically, as it's already generated.  
 To enable coeff generation, set generateLightProbes_=true in the CharacterDemo.  
