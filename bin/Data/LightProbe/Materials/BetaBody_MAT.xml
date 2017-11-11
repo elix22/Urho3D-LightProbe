@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<material>
+	<technique name="Techniques/NoTextureLP.xml" />
+    <texture unit="environment" name="LightProbe/Textures/SHprobeData.png" />
+	<parameter name="NumProbes" value="4" />
+	<parameter name="TextSize" value="64" />
+	<parameter name="MatDiffColor" value="1 1 1 1" />
+	<parameter name="MatSpecColor" value="0.28926 0.28926 0.28926 22.248" />
+	<parameter name="MatEmissiveColor" value="0 0 0 1" />
+</material>
