@@ -154,15 +154,15 @@ private:
         return bary;
     }
 
-    // missing in Urh3D::vector2
+    // missing in Urh3D::Vector2
     static inline float CrossProduct(const Vector2 &a, const Vector2 &b)
     {
         return Abs(a.x_ * b.y_ - a.y_ * b.x_);
     }
 
     //=============================================================================
-    // **note: another proportinal comparator - the sum of the three segment areas is 
-    // equal to the area of triangle and  the sum of the barycentric is equal to one, if it's inside the triangle
+    // **note: another proportinal comparator - the sum of the three segment areas is equal to the 
+    // area of triangle, hence you can also conclude that the sum of the barycentric is equal to one, if it's inside the triangle
     //=============================================================================
     static inline bool BaryInsideTriangle(const Vector3 &bary)
     {

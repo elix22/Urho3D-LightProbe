@@ -123,7 +123,7 @@
 			<attribute name="Light Type" value="Spot" />
 			<attribute name="Color" value="0.7 0.7 0.7 1" />
 			<attribute name="Specular Intensity" value="0.2" />
-			<attribute name="Brightness Multiplier" value="2" />
+			<attribute name="Brightness Multiplier" value="1" />
 			<attribute name="Length" value="30" />
 			<attribute name="Range" value="30" />
 			<attribute name="Spot FOV" value="50" />

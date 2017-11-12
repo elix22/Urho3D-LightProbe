@@ -54,8 +54,6 @@
 #include "CharacterDemo.h"
 #include "Character.h"
 #include "LightProbeCreator.h"
-#include "LightProbe.h"
-#include "CubeCapture.h"
 #include "CollisionLayer.h"
 
 #include <Urho3D/DebugNew.h>
@@ -119,8 +117,6 @@ void CharacterDemo::CreateScene()
 
     scene_ = new Scene(context_);
 
-    LightProbeCreator *lightProbeCreator;
-    context_->RegisterSubsystem((lightProbeCreator = new LightProbeCreator(context_)));
 
     cameraNode_ = new Node(context_);
     Camera* camera = cameraNode_->CreateComponent<Camera>();
@@ -131,12 +127,15 @@ void CharacterDemo::CreateScene()
     XMLFile *xmlLevel = cache->GetResource<XMLFile>("LightProbe/testScene.xml");
     scene_->LoadXML(xmlLevel->GetRoot());
 
-    // start the timer and go
-    hrTimer_.Reset();
+    // init lp creator
+    LightProbeCreator *lightProbeCreator;
+    context_->RegisterSubsystem((lightProbeCreator = new LightProbeCreator(context_)));
     lightProbeCreator->Init(scene_, "Data/LightProbe");
 
     if (generateLightProbes_)
     {
+        // start the timer and go
+        hrTimer_.Reset();
         lightProbeCreator->GenerateLightProbes();
     }
 }
@@ -156,8 +155,9 @@ void CharacterDemo::CreateCharacter()
     // Create the rendering component + animation controller
     AnimatedModel* object = adjustNode->CreateComponent<AnimatedModel>();
     object->SetModel(cache->GetResource<Model>("Platforms/Models/BetaLowpoly/Beta.mdl"));
-    object->SetMaterial(0, cache->GetResource<Material>("LightProbe/Materials/BetaBody_MAT.xml"));
-    object->SetMaterial(1, cache->GetResource<Material>("LightProbe/Materials/BetaBody_MAT.xml"));
+    SharedPtr<Material> clMat = cache->GetResource<Material>("LightProbe/Materials/BetaBody_MAT.xml")->Clone();
+    object->SetMaterial(0, clMat);
+    object->SetMaterial(1, clMat);
     object->SetMaterial(2, cache->GetResource<Material>("Platforms/Materials/BetaJoints_MAT.xml"));
     object->SetCastShadows(true);
     adjustNode->CreateComponent<AnimationController>();

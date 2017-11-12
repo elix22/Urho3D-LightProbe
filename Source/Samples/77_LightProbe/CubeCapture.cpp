@@ -43,6 +43,7 @@
 #define FIXED_IMAGE_SIZE    32
 
 //=============================================================================
+// adapted from EditorCubeCapture.as
 //=============================================================================
 CubeCapture::CubeCapture(Context* context)
     : Component(context)
@@ -147,7 +148,7 @@ void CubeCapture::HandlePostRender(StringHash eventType, VariantMap& eventData)
         textureCube_->GetImage(face)->SavePNG(path);
     }
 
-    // post incr
+    // post increment, opposed to how it's pre-incremented in the EditorCubeCapture.as
     ++updateCycle_;
 }
 
@@ -200,7 +201,6 @@ Quaternion CubeCapture::RotationOf(CubeMapFace face) const
     case FACE_POSITIVE_Z: return Quaternion(0, 0, 0);  
     case FACE_NEGATIVE_Z: return Quaternion(0, 180, 0);
     }
-    Quaternion result;
-    return result;
+    return Quaternion::IDENTITY;
 }
 

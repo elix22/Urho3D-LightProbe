@@ -426,7 +426,7 @@ CubeMapFace LightProbe::GetCubefaceFromNormal(const Vector3 &normal)
 
     for ( unsigned i = 0; i < MAX_CUBEMAP_FACES; ++i )
     {
-        if (normal.DotProduct(cubefaceNormals[i]) > 1.0f - M_EPSILON)
+        if (normal.DotProduct(cubefaceNormals[i]) > 1.0f - M_LARGE_EPSILON)
             return (CubeMapFace)i;
     }
 

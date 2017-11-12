@@ -2,7 +2,7 @@
   
 ---
 ### Description
-SH coefficients generated from cubemap texture and applied at run time via shader program to achieve Environment Irradiance. Based on: An Efficient Representation for Irradiance Environment Maps.  
+SH coefficients generated from cubemap texture and applied at run time via shader program to achieve interreflected transfer. Based on: An Efficient Representation for Irradiance Environment Maps.  
 ref: http://graphics.stanford.edu/papers/envmap/  
 
 In this example, there are four lightprobes in the scene placed near objects that reflect some color to validate testing - look for red boxes and green sphere.  
@@ -23,13 +23,14 @@ To enable coeff generation, set **generateLightProbes_=true** in the CharacterDe
 **Note:** enabling the above dump will obviously impact the build time.  
   
 ---  
-### Improvements:
-For test purposes, querying for light probe's position each frame is constant but not ideal as the number of light probes increase.  Eventually, the character class should peform queries of the closest light probes and pass the index via the shader material.
-  
----  
 ### Further optimization:
 LightProbe::CalculateSH() fn - instead of re-calcuating the xy pixels, normals and cube face, this could be saved and reused as they're same for all lightprobes.
   
+---  
+### DX9 build problems:
+* huge compile spike when you 1st run the demo. I'm yet uncertain whether I should manually unroll the for-loop.
+* light globes, models which cover actual lights, changes to different color. I have no idea why it does this.
+
   
 ---
 ### Screenshots

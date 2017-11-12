@@ -54,7 +54,7 @@ void LightProbeCreator::Init(Scene *scene, const String& basepath)
 {
     ResourceCache* cache = GetSubsystem<ResourceCache>();
 
-    // all lightprobes use the default unit box - parse one
+    // all lightprobes use the default unit box - parse it
     LightProbe::SetupUnitBoxGeom(cache->GetResource<Model>("Models/Box.mdl"));
 
     scene_ = scene;
@@ -109,6 +109,7 @@ void LightProbeCreator::WriteSHTableImage()
     SharedPtr<Image> image(new Image(context_));
 
     // set default size to 64x1 for testing
+    // **consider this: NextPowerOfTwo(initialCnt_ * 10), 10 pixels per light probe
     image->SetSize(64, 1, 4);
 
     for ( int i = 0; i < (int)initialCnt_; ++i )

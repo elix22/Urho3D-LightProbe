@@ -4,6 +4,7 @@
 #include "ScreenPos.glsl"
 #include "Lighting.glsl"
 #include "Fog.glsl"
+#include "LightProbe.glsl"
 
 #ifdef NORMALMAP
     varying vec4 vTexCoord;
@@ -40,117 +41,6 @@ varying vec4 vWorldPos;
         varying vec2 vTexCoord2;
     #endif
 #endif
-
-#line 1000
-
-//=============================================================================
-//=============================================================================
-uniform float cNumProbes;
-uniform float cTextSize;
-
-#ifdef GL_ES
-#define USE_TEXTURE
-#endif
-
-//=============================================================================
-//=============================================================================
-vec3 irradcoeffs(vec3 L00, vec3 L1_1, vec3 L10, vec3 L11, 
-                 vec3 L2_2, vec3 L2_1, vec3 L20, vec3 L21, vec3 L22,
-                 vec3 n) 
-{
-  //------------------------------------------------------------------
-  // These are variables to hold x,y,z and squares and products
-
-	float x2 ;
-	float  y2 ;
-	float z2 ;
-	float xy ;
-	float  yz ;
-	float  xz ;
-	float x ;
-	float y ;
-	float z ;
-	vec3 col ;
-  //------------------------------------------------------------------       
-  // We now define the constants and assign values to x,y, and z 
-	
-	const float c1 = 0.429043 ;
-	const float c2 = 0.511664 ;
-	const float c3 = 0.743125 ;
-	const float c4 = 0.886227 ;
-	const float c5 = 0.247708 ;
-	x = n.x ; y = n.y ; z = n.z ;
-  //------------------------------------------------------------------ 
-  // We now compute the squares and products needed 
-
-	x2 = x*x ; y2 = y*y ; z2 = z*z ;
-	xy = x*y ; yz = y*z ; xz = x*z ;
-  //------------------------------------------------------------------ 
-  // Finally, we compute equation 13
-
-	col = c1*L22*(x2-y2) + c3*L20*z2 + c4*L00 - c5*L20 
-            + 2*c1*(L2_2*xy + L21*xz + L2_1*yz) 
-            + 2*c2*(L11*x+L1_1*y+L10*z) ;
-
-	return col;
-}
-
-vec3 GetSH(sampler2D envMap, float width, int i, int j)
-{
-    #ifdef USE_TEXTURE
-    vec3 sh = texture2D(envMap, vec2(float(i*10 + j + 1), 0)/width).xyz;
-    #else
-    vec3 sh = texelFetch(envMap, ivec2(i*10 + j + 1, 0), 0).xyz;
-    #endif
-    sh = (sh - vec3(0.5, 0.5, 0.5)) * 10.0f;
-    return sh;
-}
-
-#line 2000
-vec3 SHDiffuse(sampler2D envMap, vec3 normal, vec3 worldPos)
-{
-    // probe cnt
-    float fnumCnt = cNumProbes;
-    float width = cTextSize;
-    int numCnt = int(fnumCnt);
-    vec3 shdiff = vec3(0,0,0);
-    vec3 sh[9];
-    float cnt=0;
-
-    for (int i = 0; i < numCnt; ++i)
-    {
-        // world pos
-        #ifdef USE_TEXTURE
-        vec3 wpos = texture2D(envMap, vec2(float(i*10), 0)/width).xyz;
-        #else
-        vec3 wpos = texelFetch(envMap, ivec2(i*10, 0), 0).xyz;
-        #endif
-
-        wpos = (wpos * 2.0 - vec3(1,1,1)) * 100.0;
-        vec3 seg = wpos - worldPos;
-        float dist = length(seg);
-        if (dist > 4.0)
-        {
-            continue;
-        }
-        dist = clamp(dist, 0.75, 4);
-
-        for (int j = 0; j < 9; ++j)
-        {
-            sh[j] = GetSH(envMap, width, i, j);
-        }
-
-        shdiff += irradcoeffs(sh[0], sh[1], sh[2], sh[3], sh[4], sh[5], sh[6], sh[7], sh[8], normal) * 1.0/dist;
-        cnt += 1.0;
-    }
-
-    if (cnt > 1)
-    {
-        shdiff /= cnt;
-    }
-
-    return shdiff;
-}
 
 void VS()
 {
@@ -226,7 +116,7 @@ void PS()
         #endif
         vec4 diffColor = cMatDiffColor * diffInput;
     #elif defined(LIGHTPROBE)
-        vec3 shdiff = SHDiffuse(sEnvMap, normalize(vNormal), vWorldPos.xyz);
+        vec3 shdiff = GatherDiffLightProbes(ivec2(cProbeIndex), normalize(vNormal), vWorldPos.xyz);
         vec4 diffColor = cMatDiffColor + vec4(shdiff, 0);
     #else
         vec4 diffColor = cMatDiffColor;

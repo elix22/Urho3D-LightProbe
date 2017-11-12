@@ -22,6 +22,8 @@
 
 #include <Urho3D/Core/Context.h>
 #include <Urho3D/Graphics/AnimationController.h>
+#include <Urho3D/Graphics/AnimatedModel.h>
+#include <Urho3D/Graphics/Material.h>
 #include <Urho3D/IO/MemoryBuffer.h>
 #include <Urho3D/Physics/PhysicsEvents.h>
 #include <Urho3D/Physics/PhysicsWorld.h>
@@ -44,7 +46,9 @@ Character::Character(Context* context) :
     onGround_(false),
     okToJump_(true),
     inAirTimer_(0.0f),
-    jumpStarted_(false)
+    jumpStarted_(false),
+    updateLightProbeIndices_(true),
+    minDistToProbe_(15.0f)
 {
     // Only the physics update event is needed: unsubscribe from the rest for optimization
     SetUpdateEventMask(USE_FIXEDUPDATE);
@@ -63,10 +67,25 @@ void Character::RegisterObject(Context* context)
     URHO3D_ATTRIBUTE("In Air Timer", float, inAirTimer_, 0.0f, AM_DEFAULT);
 }
 
-void Character::Start()
+void Character::DelayedStart()
 {
     // Component has been inserted into its scene node. Subscribe to events now
     SubscribeToEvent(GetNode(), E_NODECOLLISION, URHO3D_HANDLER(Character, HandleNodeCollision));
+
+    if (updateLightProbeIndices_)
+    {
+        AnimatedModel *amodel = node_->GetComponent<AnimatedModel>(true);
+        charMaterial_ = amodel->GetMaterial();
+        probeIndex_ = IntVector2(-1, -1);
+
+        // the index order is the same as how LightProbeCreator got the order
+        node_->GetScene()->GetChildrenWithComponent(lightProbeNodeList_, "LightProbe", true);
+
+        if (lightProbeNodeList_.Size() == 0)
+        {
+            updateLightProbeIndices_ = false;
+        }
+    }
 }
 
 void Character::FixedUpdate(float timeStep)
@@ -169,6 +188,44 @@ void Character::FixedUpdate(float timeStep)
 
     // Reset grounded flag for next frame
     onGround_ = false;
+
+    UpdateLPIndex();
+}
+
+void Character::UpdateLPIndex()
+{
+    if (updateLightProbeIndices_)
+    {
+        // half sec. wait timer
+        if (timerLPUpdateIndex_.GetMSec(false) > 500)
+        {
+            float maxdist = minDistToProbe_;
+            Vector3 pos = node_->GetWorldPosition();
+            int idx = -1;
+
+            for ( unsigned i = 0; i < lightProbeNodeList_.Size(); ++i )
+            {
+                float dist = (lightProbeNodeList_[i]->GetWorldPosition() - pos).Length();
+
+                if (dist < maxdist)
+                {
+                    maxdist = dist;
+                    idx = (int)i;
+                }
+            }
+
+            // change to a new index and/or disable it
+            if (idx != probeIndex_.x_)
+            {
+                probeIndex_.x_ = idx;
+
+                // the 2nd index is inactive for this demo
+                charMaterial_->SetShaderParameter("ProbeIndex", Vector2((float)probeIndex_.x_, (float)probeIndex_.y_) );
+            }
+
+            timerLPUpdateIndex_.Reset();
+        }
+    }
 }
 
 void Character::HandleNodeCollision(StringHash eventType, VariantMap& eventData)

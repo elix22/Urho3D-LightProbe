@@ -26,6 +26,10 @@
 #include <Urho3D/Scene/LogicComponent.h>
 
 using namespace Urho3D;
+namespace Urho3D
+{
+class Material;
+}
 
 //=============================================================================
 //=============================================================================
@@ -57,7 +61,7 @@ public:
     static void RegisterObject(Context* context);
     
     /// Handle startup. Called by LogicComponent base class.
-    virtual void Start();
+    virtual void DelayedStart();
     /// Handle physics world update. Called by LogicComponent base class.
     virtual void FixedUpdate(float timeStep);
     
@@ -67,7 +71,8 @@ public:
 private:
     /// Handle physics collision event.
     void HandleNodeCollision(StringHash eventType, VariantMap& eventData);
-    
+    void UpdateLPIndex();
+
     /// Grounded flag for movement.
     bool onGround_;
     /// Jump flag.
@@ -75,4 +80,12 @@ private:
     bool jumpStarted_;
     /// In air timer. Due to possible physics inaccuracy, character can be off ground for max. 1/10 second and still be allowed to move.
     float inAirTimer_;
+
+    // light probe
+    bool updateLightProbeIndices_;
+    float minDistToProbe_;
+    PODVector<Node*> lightProbeNodeList_;
+    IntVector2 probeIndex_;
+    WeakPtr<Material> charMaterial_;
+    Timer timerLPUpdateIndex_;
 };
