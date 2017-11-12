@@ -1,6 +1,6 @@
 # Urho3D LightProbe
   
---
+---
 ### Description
 SH coefficients generated from cubemap texture and applied at run time via shader program to achieve interreflected transfer. Based on: An Efficient Representation for Irradiance Environment Maps.  
 ref: http://graphics.stanford.edu/papers/envmap/  
