@@ -24,11 +24,11 @@ To enable coeff generation, set **generateLightProbes_=true** in the CharacterDe
   
 ---  
 ### Further optimization:
-LightProbe::CalculateSH() fn - instead of re-calcuating the xy pixels, normals and cube face, this could be saved and reused as they're same for all lightprobes.
+LightProbe::CalculateSH() fn: instead of re-calcuating the xy pixels, normals and cube face, this could be saved and reused as they're same for all lightprobes.
   
 ---  
 ### DX9 build problems:
-* huge compile spike when you 1st run the demo. I'm yet uncertain whether I should manually unroll the for-loop.
+* huge shader compile spike when you 1st run the demo. I'm yet uncertain whether I should manually unroll the for-loop.
 * light globes, models which cover actual lights, changes to different color. I have no idea why it does this.
 
   
