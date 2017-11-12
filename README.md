@@ -2,7 +2,7 @@
   
 ---
 ### Description
-SH coefficients generated from cubemap texture and applied at run time via shader program to achieve interreflected transfer. Based on: An Efficient Representation for Irradiance Environment Maps.  
+SH coefficients generated from cubemap texture and applied at run time via shader program to achieve Environment Irradiance. Based on: An Efficient Representation for Irradiance Environment Maps.  
 ref: http://graphics.stanford.edu/papers/envmap/  
 
 In this example, there are four lightprobes in the scene placed near objects that reflect some color to validate testing - look for red boxes and green sphere.  
