@@ -1,11 +1,11 @@
 # Urho3D LightProbe
 
 ### Description
-SH coefficients generated from cubemap texture and applied at run time via shader program to achieve interreflected transfer.  
-Based on: An Efficient Representation for Irradiance Environment Maps.  
+SH coefficients generated from cubemap texture and applied at run time via shader program to achieve interreflected transfer. Based on: An Efficient Representation for Irradiance Environment Maps.  
 ref: http://graphics.stanford.edu/papers/envmap/  
 
 In this example, there are four lightprobes in the scene placed near objects that reflect some color to validate testing - look for red boxes and green sphere.  
+  
   
   
 ### How the coffecients are generated, stored and applied:
@@ -21,6 +21,7 @@ To enable coeff generation, set **generateLightProbes_=true** in the CharacterDe
 * dump cubemap textures by setting **dumpOutputFiles_=true** in CubeCapture class.
 * dump sh coeffs by setting **dumpShCoeff_=true** in LightProbe class.  
 **Note:** enabling the above dump will obviously impact the build time.  
+  
   
   
 
