@@ -47,7 +47,7 @@ Character::Character(Context* context) :
     okToJump_(true),
     inAirTimer_(0.0f),
     jumpStarted_(false),
-    updateLightProbeIndices_(true),
+    updateLightProbeIndex_(true),
     minDistToProbe_(15.0f)
 {
     // Only the physics update event is needed: unsubscribe from the rest for optimization
@@ -72,18 +72,18 @@ void Character::DelayedStart()
     // Component has been inserted into its scene node. Subscribe to events now
     SubscribeToEvent(GetNode(), E_NODECOLLISION, URHO3D_HANDLER(Character, HandleNodeCollision));
 
-    if (updateLightProbeIndices_)
+    if (updateLightProbeIndex_)
     {
         AnimatedModel *amodel = node_->GetComponent<AnimatedModel>(true);
         charMaterial_ = amodel->GetMaterial();
         probeIndex_ = IntVector2(-1, -1);
 
         // the index order is the same as how LightProbeCreator got the order
-        node_->GetScene()->GetChildrenWithComponent(lightProbeNodeList_, "LightProbe", true);
+        GetScene()->GetChildrenWithComponent(lightProbeNodeList_, "LightProbe", true);
 
         if (lightProbeNodeList_.Size() == 0)
         {
-            updateLightProbeIndices_ = false;
+            updateLightProbeIndex_ = false;
         }
     }
 }
@@ -194,7 +194,7 @@ void Character::FixedUpdate(float timeStep)
 
 void Character::UpdateLPIndex()
 {
-    if (updateLightProbeIndices_)
+    if (updateLightProbeIndex_)
     {
         // half sec. wait timer
         if (timerLPUpdateIndex_.GetMSec(false) > 500)

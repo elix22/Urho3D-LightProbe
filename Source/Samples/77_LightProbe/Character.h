@@ -82,7 +82,7 @@ private:
     float inAirTimer_;
 
     // light probe
-    bool updateLightProbeIndices_;
+    bool updateLightProbeIndex_;
     float minDistToProbe_;
     PODVector<Node*> lightProbeNodeList_;
     IntVector2 probeIndex_;
