@@ -98,6 +98,9 @@ void CharacterDemo::Start()
 {
     Sample::Start();
 
+    // init lp creator - this needs to be created before a scene is parsed, otherwise, LightProbe component is unknown
+    CreateLightProbeCreator();
+
     CreateInstructions();
 
     CreateScene();
@@ -117,7 +120,6 @@ void CharacterDemo::CreateScene()
 
     scene_ = new Scene(context_);
 
-
     cameraNode_ = new Node(context_);
     Camera* camera = cameraNode_->CreateComponent<Camera>();
     camera->SetFarClip(300.0f);
@@ -127,9 +129,8 @@ void CharacterDemo::CreateScene()
     XMLFile *xmlLevel = cache->GetResource<XMLFile>("LightProbe/testScene.xml");
     scene_->LoadXML(xmlLevel->GetRoot());
 
-    // init lp creator
-    LightProbeCreator *lightProbeCreator;
-    context_->RegisterSubsystem((lightProbeCreator = new LightProbeCreator(context_)));
+    // init and start lp creator
+    LightProbeCreator *lightProbeCreator = GetSubsystem<LightProbeCreator>();
     lightProbeCreator->Init(scene_, "Data/LightProbe");
 
     if (generateLightProbes_)
@@ -207,6 +208,7 @@ void CharacterDemo::CreateInstructions()
 
 void CharacterDemo::CreateLightProbeCreator()
 {
+    context_->RegisterSubsystem(new LightProbeCreator(context_));
 }
 
 void CharacterDemo::ChangeDebugHudText()
