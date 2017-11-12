@@ -1,5 +1,6 @@
 # Urho3D LightProbe
-
+  
+--
 ### Description
 SH coefficients generated from cubemap texture and applied at run time via shader program to achieve interreflected transfer. Based on: An Efficient Representation for Irradiance Environment Maps.  
 ref: http://graphics.stanford.edu/papers/envmap/  
@@ -30,8 +31,9 @@ For test purposes, querying for light probe's position each frame is constant bu
 LightProbe::CalculateSH() fn - instead of re-calcuating the xy pixels, normals and cube face, this could be saved and reused as they're same for all lightprobes.
   
   
-### Screenshots
 ---
+### Screenshots
+
 ![alt tag](https://github.com/Lumak/Urho3D-LightProbe/blob/master/screenshot/lightprobescreen1.png)
 ![alt tag](https://github.com/Lumak/Urho3D-LightProbe/blob/master/screenshot/lightprobescreen2.png)
 
