@@ -1,9 +1,10 @@
 #ifdef COMPILEPS
 //=============================================================================
 //=============================================================================
-uniform vec2 cProbeIndex;
+uniform int cProbeIndex;
+uniform vec3 cProbePosition;
 uniform float cMinProbeDistance;
-uniform float cTextSize;
+uniform float cTextureSize;
 uniform float cSHIntensity;
 
 #ifdef GL_ES
@@ -54,79 +55,48 @@ vec3 irradcoeffs(vec3 L00, vec3 L1_1, vec3 L10, vec3 L11,
 	return col;
 }
 
-vec3 GetSH(float width, int i, int j)
+vec3 GetSH(int i)
 {
     #ifdef USE_TEXTURE2D
-    vec3 sh = texture2D(sEnvMap, vec2(float(i*10 + j + 1), 0)/width).xyz;
+    vec3 sh = texture2D(sEnvMap, vec2(float(cProbeIndex*9 + i), 0)/cTextureSize).xyz;
     #else
-    vec3 sh = texelFetch(sEnvMap, ivec2(i*10 + j + 1, 0), 0).xyz;
+    vec3 sh = texelFetch(sEnvMap, ivec2(cProbeIndex*9 + i, 0), 0).xyz;
     #endif
     sh = (sh - vec3(0.5, 0.5, 0.5)) * 10.0f;
     return sh;
 }
 
 #line 2000
-vec3 SHDiffuse(int probeIdx, vec3 normal, vec3 worldPos)
+vec3 SHDiffuse(vec3 normal, vec3 worldPos)
 {
-    // probe cnt
-    float width = cTextSize;
-    vec3 sh[9];
-
     // world pos
-    #ifdef USE_TEXTURE2D
-    vec3 wpos = texture2D(sEnvMap, vec2(float(probeIdx*10), 0)/width).xyz;
-    #else
-    vec3 wpos = texelFetch(sEnvMap, ivec2(probeIdx*10, 0), 0).xyz;
-    #endif
-
-    wpos = (wpos * 2.0 - vec3(1,1,1)) * 100.0;
-    vec3 seg = wpos - worldPos;
+    vec3 seg = cProbePosition - worldPos;
     float dist = length(seg);
     if (dist > cMinProbeDistance)
     {
         return vec3(0,0,0);
     }
+
     dist = clamp(dist, 0.75, cMinProbeDistance);
 
-    for (int j = 0; j < 9; ++j)
+    // read sh
+    vec3 sh[9];
+    for (int i = 0; i < 9; ++i)
     {
-        sh[j] = GetSH(width, probeIdx, j);
+        sh[i] = GetSH(i);
     }
 
     return irradcoeffs(sh[0], sh[1], sh[2], sh[3], sh[4], sh[5], sh[6], sh[7], sh[8], normal) * 1.0/dist;
 }
 
-vec3 GatherDiffLightProbes(ivec2 probeIndex, vec3 normal, vec3 worldPos)
+vec3 GatherDiffLightProbes(vec3 normal, vec3 worldPos)
 {
-    vec3 shdiff = vec3(0,0,0);
-    bool foundOne = false;
-
-    if (probeIndex.x > -1)
+    if (cProbeIndex == -1)
     {
-        shdiff = SHDiffuse(probeIndex.x, normal, worldPos);
-        if (shdiff.x + shdiff.y + shdiff.z > 0.1)
-        {
-            foundOne = true;
-        }
+        return vec3(0,0,0);
     }
 
-    if (probeIndex.y > -1)
-    {
-        vec3 shdiff2 = SHDiffuse(probeIndex.y, normal, worldPos);
-        if (shdiff2.x + shdiff2.y + shdiff2.z > 0.1)
-        {
-            if (foundOne)
-            {
-                shdiff = (shdiff + shdiff2) * 0.5;
-            }
-            else
-            {
-                shdiff = shdiff2;
-            }
-        }
-    }
-
-    return shdiff * cSHIntensity;
+    return SHDiffuse(normal, worldPos) * cSHIntensity;
 }
 #endif //COMPILEPS
 

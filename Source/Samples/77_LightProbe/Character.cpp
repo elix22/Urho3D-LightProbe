@@ -48,7 +48,8 @@ Character::Character(Context* context) :
     inAirTimer_(0.0f),
     jumpStarted_(false),
     updateLightProbeIndex_(true),
-    minDistToProbe_(15.0f)
+    minDistToProbe_(15.0f),
+    probeIndex_(-1)
 {
     // Only the physics update event is needed: unsubscribe from the rest for optimization
     SetUpdateEventMask(USE_FIXEDUPDATE);
@@ -76,7 +77,6 @@ void Character::DelayedStart()
     {
         AnimatedModel *amodel = node_->GetComponent<AnimatedModel>(true);
         charMaterial_ = amodel->GetMaterial();
-        probeIndex_ = IntVector2(-1, -1);
 
         // the index order is the same as how LightProbeCreator got the order
         GetScene()->GetChildrenWithComponent(lightProbeNodeList_, "LightProbe", true);
@@ -203,24 +203,26 @@ void Character::UpdateLPIndex()
             Vector3 pos = node_->GetWorldPosition();
             int idx = -1;
 
-            for ( unsigned i = 0; i < lightProbeNodeList_.Size(); ++i )
+            for ( int i = 0; i < (int)lightProbeNodeList_.Size(); ++i )
             {
                 float dist = (lightProbeNodeList_[i]->GetWorldPosition() - pos).Length();
 
                 if (dist < maxdist)
                 {
                     maxdist = dist;
-                    idx = (int)i;
+                    idx = i;
                 }
             }
 
             // change to a new index and/or disable it
-            if (idx != probeIndex_.x_)
+            if (idx != probeIndex_)
             {
-                probeIndex_.x_ = idx;
+                probeIndex_ = idx;
 
-                // the 2nd index is inactive for this demo
-                charMaterial_->SetShaderParameter("ProbeIndex", Vector2((float)probeIndex_.x_, (float)probeIndex_.y_) );
+                // change vars
+                Vector3 probePos = (probeIndex_ > -1)?lightProbeNodeList_[probeIndex_]->GetWorldPosition():Vector3::ZERO;
+                charMaterial_->SetShaderParameter("ProbePosition", probePos);
+                charMaterial_->SetShaderParameter("ProbeIndex", (float)probeIndex_);
             }
 
             timerLPUpdateIndex_.Reset();

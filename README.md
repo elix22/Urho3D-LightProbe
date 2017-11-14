@@ -5,7 +5,7 @@
 SH coefficients generated from cubemap texture and applied at run time via shader program to achieve interreflected transfer. Based on: An Efficient Representation for Irradiance Environment Maps.  
 ref: http://graphics.stanford.edu/papers/envmap/  
 
-In this example, there are four lightprobes in the scene placed near objects that reflect some color to validate testing - look for red boxes and green sphere.  
+There are six lightprobes in the scene that reflect some color to validate testing. You can spot them easily.  
   
 ---  
 ### How the coffecients are generated, stored and applied:
@@ -14,8 +14,8 @@ In this example, there are four lightprobes in the scene placed near objects tha
 3) LightProbeCreator class gathers SH coefficients from all the LightProbe class and packs the information into a single ShprobeData.png file.
 4) shader program reads the ShprobeData.png data and applies eqn. 13 mentioned in the ref above.
   
-Coefficient generation takes about **200 msec.** for the scene. Your results may vary. The example does not generate the coefficients automatically, as it's already generated.  
-To enable coeff generation, set **generateLightProbes_=true** in the CharacterDemo.  
+Coefficient generation takes about **240 msec.** for the scene. Your results may vary. The example does not generate the coefficients automatically, as it's already generated.  
+To enable coeff generation, set **generateLightProbes_=true** in the CharacterDemo class.  
 
 #### Some useful debugging info:
 * dump cubemap textures by setting **dumpOutputFiles_=true** in CubeCapture class.
@@ -28,13 +28,15 @@ LightProbe::CalculateSH() fn: instead of re-calcuating the xy pixels, normals an
   
 ---  
 ### DX9 build problems:
-* huge shader compile spike when you 1st run the demo. I'm yet uncertain whether I should manually unroll the for-loop.
+* huge shader compile spike when you 1st run the demo. I added a define to MANUL_UNROLL.
 * light globes, models which cover actual lights, changes to different color. I have no idea why it does this.
+* initially, passed cProbeIndex as int and I noticed it was glitchy. Changed it to float and it works fine. Coincidentally, changed glsl var to float to reflect shader programs to remain some what similar.
 
   
 ---
 ### Screenshots
 
+![alt tag](https://github.com/Lumak/Urho3D-LightProbe/blob/master/screenshot/lightprobescreen0.png)
 ![alt tag](https://github.com/Lumak/Urho3D-LightProbe/blob/master/screenshot/lightprobescreen1.png)
 ![alt tag](https://github.com/Lumak/Urho3D-LightProbe/blob/master/screenshot/lightprobescreen2.png)
 

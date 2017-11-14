@@ -28,6 +28,7 @@
 #include <Urho3D/Graphics/Material.h>
 #include <Urho3D/Graphics/Model.h>
 #include <Urho3D/IO/FileSystem.h>
+#include <Urho3D/IO/Log.h>
 
 #include "LightProbeCreator.h"
 #include "LightProbe.h"
@@ -41,6 +42,8 @@ LightProbeCreator::LightProbeCreator(Context* context)
     , initialCnt_(0)
     , numProcessed_(0)
     , maxThreads_(8)
+    , shProbeTextureWidth_(0)
+    , worldPreScaler_(100.0f)
 {
     LightProbe::RegisterObject(context);
     CubeCapture::RegisterObject(context);
@@ -108,21 +111,14 @@ void LightProbeCreator::WriteSHTableImage()
 {
     SharedPtr<Image> image(new Image(context_));
 
-    // set default size to 64x1 for testing
-    // **consider this: NextPowerOfTwo(initialCnt_ * 10), 10 pixels per light probe
-    image->SetSize(64, 1, 4);
+    // size is calculated as 64 for testing
+    shProbeTextureWidth_ = NextPowerOfTwo(initialCnt_ * 9);
+    image->SetSize(shProbeTextureWidth_, 1, 4);
 
     for ( int i = 0; i < (int)initialCnt_; ++i )
     {
         LightProbe *lightProbe = maintainedNodeList_[i]->GetComponent<LightProbe>();
         PODVector<Vector3> &coeffVec = lightProbe->GetCoeffVec();
-
-        // write probe's node pos: scaled wpos -> normalized to [0, 1]
-        Vector3 swpos = maintainedNodeList_[i]->GetWorldPosition() * 1.0f/100.0f;
-        Vector3 npos = (swpos + Vector3::ONE) * 0.5f;
-        // reverse in shader: swpos = (npos * 2.0f - Vector3::ONE) * 100.0f;
-
-        image->SetPixel((i * 10), 0, Color(npos.x_, npos.y_, npos.z_));
 
         // write coeffs - normalized to [0, 1]
         for ( int j = 0; j < 9; ++j )
@@ -130,11 +126,44 @@ void LightProbeCreator::WriteSHTableImage()
             float c0 = coeffVec[j].x_ * 0.1f + 0.5f;
             float c1 = coeffVec[j].y_ * 0.1f + 0.5f;
             float c2 = coeffVec[j].z_ * 0.1f + 0.5f;
-            // reverse in shader: coeff = (c - Vector3(0.5,0.5,0.5)) * 10.0f;
-            image->SetPixel((i * 10) + j + 1, 0, Color(c0, c1, c2));
+            // **reverse in shader: coeff = (c - Vector3(0.5,0.5,0.5)) * 10.0f;
+            image->SetPixel((i * 9) + j, 0, Color(c0, c1, c2));
         }
     }
     image->SavePNG(programPath_ + basepath_ + "/Textures/SHprobeData.png");
+}
+
+Vector4 LightProbeCreator::WorldPositionToColor(const Vector3 &wpos) const
+{
+    const Vector4 wpos4 = Vector4(wpos.x_, wpos.y_, wpos.z_, 1.0) * (1.0f / worldPreScaler_);
+    Vector4 convColor = wpos4;
+    int incrFactor = 0;
+
+    while (Abs(convColor.x_) > 1.0f || Abs(convColor.y_) > 1.0f || Abs(convColor.z_) > 1.0f)
+    {
+        if (incrFactor + 5 > 255)
+        {
+            URHO3D_LOGERROR("LightProbeCreator::WorldPositionToColor() wpos is larger than +-25.5k bounds!");
+
+            // mark it red so it's easy to see
+            return Vector4(1.0f, 0.0f, 0.0f, 1.0f);
+        }
+
+        incrFactor += 5;
+        convColor = wpos4 * (1.0f - ((float)incrFactor - 1.0f)/255.0f);
+    }
+
+    // range of conv color = [1, 1/255], never zero
+    if (incrFactor == 0)
+    {
+        convColor.w_ = 1.0f;
+    }
+    else
+    {
+        convColor.w_ = 1.0f - ((float)incrFactor - 1.0f) / 255.0f;
+    }
+
+    return convColor;
 }
 
 void LightProbeCreator::MarkNodeComplete(Node *node)

@@ -53,7 +53,7 @@ LightProbe::LightProbe(Context* context)
     , generated_(false)
     , buildState_(SHBuild_Uninit)
     , threadProcess_(NULL)
-    , dumpShCoeff_(false)
+    , dumpShCoeff_(true)
 {
 }
 

@@ -1,10 +1,11 @@
 #ifdef COMPILEPS
 //=============================================================================
 //=============================================================================
-uniform int2 cProbeIndex;
+uniform float cProbeIndex;
+uniform float3 cProbePosition;
 uniform float cMinProbeDistance;
-uniform float cTextSize;
 uniform float cSHIntensity;
+uniform float cTextureSize;
 
 #line 1000
 //=============================================================================
@@ -50,27 +51,20 @@ float3 irradcoeffs(float3 L00, float3 L1_1, float3 L10, float3 L11,
 	return col;
 }
 
-float3 GetSH(float width, int i, int j)
+float3 GetSH(int i)
 {
-    float2 tex2 = float2(i*10 + j + 1, 0)/width;
+    float2 tex2 = float2((float)(cProbeIndex*9 + i), 0)/cTextureSize;
     float3 sh = Sample2D(EnvMap, tex2).xyz;
     sh = (sh - float3(0.5, 0.5, 0.5)) * 10.0f;
     return sh;
 }
 
+#define MANUAL_UNROLL
 #line 2000
-float3 SHDiffuse(int probeIdx, float3 normal, float3 worldPos)
+float3 SHDiffuse(float3 normal, float3 worldPos)
 {
-    // probe cnt
-    float width = cTextSize;
-    float3 sh[9];
-
     // world pos
-    float2 tex2 = float2(probeIdx*10, 0)/width;
-    float3 wpos = Sample2D(EnvMap, tex2).xyz;
-
-    wpos = (wpos * 2.0 - float3(1,1,1)) * 100.0;
-    float3 seg = wpos - worldPos;
+    float3 seg = cProbePosition - worldPos;
     float dist = length(seg);
 
     if (dist > cMinProbeDistance)
@@ -79,46 +73,37 @@ float3 SHDiffuse(int probeIdx, float3 normal, float3 worldPos)
     }
     dist = clamp(dist, 0.75, cMinProbeDistance);
 
-    [unroll(9)]
-    for (int j = 0; j < 9; ++j)
-    {
-        sh[j] = GetSH(width, probeIdx, j);
-    }
+    // read sh
+    float3 sh[9];
 
+#ifdef MANUAL_UNROLL
+    sh[0] = GetSH(0);
+    sh[1] = GetSH(1);
+    sh[2] = GetSH(2);
+    sh[3] = GetSH(3);
+    sh[4] = GetSH(4);
+    sh[5] = GetSH(5);
+    sh[6] = GetSH(6);
+    sh[7] = GetSH(7);
+    sh[8] = GetSH(8);
+#else
+    [unroll(9)]
+    for (int i = 0; i < 9; ++i)
+    {
+        sh[i] = GetSH(i);
+    }
+#endif
     return irradcoeffs(sh[0], sh[1], sh[2], sh[3], sh[4], sh[5], sh[6], sh[7], sh[8], normal) * 1.0/dist;
 }
 
-float3 GatherDiffLightProbes(int2 probeIndex, float3 normal, float3 worldPos)
+float3 GatherDiffLightProbes(float3 normal, float3 worldPos)
 {
-    float3 shdiff = float3(0,0,0);
-    bool foundOne = false;
-
-    if (probeIndex.x > -1)
+    if (cProbeIndex == -1)
     {
-        shdiff = SHDiffuse(probeIndex.x, normal, worldPos);
-        if (shdiff.x + shdiff.y + shdiff.z > 0.1)
-        {
-            foundOne = true;
-        }
+        return float3(0,0,0);
     }
 
-    if (probeIndex.y > -1)
-    {
-        float3 shdiff2 = SHDiffuse(probeIndex.y, normal, worldPos);
-        if (shdiff2.x + shdiff2.y + shdiff2.z > 0.1)
-        {
-            if (foundOne)
-            {
-                shdiff = (shdiff + shdiff2) * 0.5;
-            }
-            else
-            {
-                shdiff = shdiff2;
-            }
-        }
-    }
-
-    return shdiff * cSHIntensity;
+    return SHDiffuse(normal, worldPos) * cSHIntensity;
 }
 
 #endif //COMPILEPS

@@ -105,7 +105,10 @@ void CharacterDemo::Start()
 
     CreateScene();
 
-    CreateCharacter();
+    if (!generateLightProbes_)
+    {
+        CreateCharacter();
+    }
 
     SubscribeToEvents();
 
@@ -133,8 +136,14 @@ void CharacterDemo::CreateScene()
     LightProbeCreator *lightProbeCreator = GetSubsystem<LightProbeCreator>();
     lightProbeCreator->Init(scene_, "Data/LightProbe");
 
+    //generateLightProbes_ = true;
     if (generateLightProbes_)
     {
+        if (instructionText_)
+        {
+            instructionText_->SetText("building");
+        }
+
         // start the timer and go
         hrTimer_.Reset();
         lightProbeCreator->GenerateLightProbes();
@@ -198,12 +207,6 @@ void CharacterDemo::CreateInstructions()
     // Position the text relative to the screen center
     instructionText_->SetHorizontalAlignment(HA_CENTER);
     instructionText_->SetPosition(0, 10);
-
-    //generateLightProbes_ = true;
-    if (generateLightProbes_)
-    {
-        instructionText_->SetText("building");
-    }
 }
 
 void CharacterDemo::CreateLightProbeCreator()
@@ -236,10 +239,16 @@ void CharacterDemo::ChangeDebugHudText()
 
 void CharacterDemo::SubscribeToEvents()
 {
-    SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(CharacterDemo, HandleUpdate));
-    SubscribeToEvent(E_POSTUPDATE, URHO3D_HANDLER(CharacterDemo, HandlePostUpdate));
-    SubscribeToEvent(E_LIGHTPROBESTATUS, URHO3D_HANDLER(CharacterDemo, HandleLPStatusEvent));
-    UnsubscribeFromEvent(E_SCENEUPDATE);
+    if (generateLightProbes_)
+    {
+        SubscribeToEvent(E_LIGHTPROBESTATUS, URHO3D_HANDLER(CharacterDemo, HandleLPStatusEvent));
+    }
+    else
+    {
+        SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(CharacterDemo, HandleUpdate));
+        SubscribeToEvent(E_POSTUPDATE, URHO3D_HANDLER(CharacterDemo, HandlePostUpdate));
+        UnsubscribeFromEvent(E_SCENEUPDATE);
+    }
 }
 
 void CharacterDemo::HandleLPStatusEvent(StringHash eventType, VariantMap& eventData)
@@ -248,13 +257,19 @@ void CharacterDemo::HandleLPStatusEvent(StringHash eventType, VariantMap& eventD
     unsigned initCnt = eventData[P_INITIAL].GetUInt();
     unsigned completeCnt = eventData[P_COMPLETED].GetUInt();
 
-
     if (initCnt == completeCnt)
     {
         float elapsed = (float)((long)hrTimer_.GetUSec(false))/1000.0f;
         char buff[30];
         sprintf(buff, "%.2f", elapsed);
         instructionText_->SetText("light probes build: " + String(buff) + " msec.");
+
+        // init remainding
+        CreateCharacter();
+
+        SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(CharacterDemo, HandleUpdate));
+        SubscribeToEvent(E_POSTUPDATE, URHO3D_HANDLER(CharacterDemo, HandlePostUpdate));
+        UnsubscribeFromEvent(E_SCENEUPDATE);
     }
     else
     {

@@ -85,7 +85,7 @@ private:
     bool updateLightProbeIndex_;
     float minDistToProbe_;
     PODVector<Node*> lightProbeNodeList_;
-    IntVector2 probeIndex_;
+    int probeIndex_;
     WeakPtr<Material> charMaterial_;
     Timer timerLPUpdateIndex_;
 };

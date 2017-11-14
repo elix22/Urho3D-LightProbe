@@ -191,7 +191,7 @@ void PS(
         #endif
         float4 diffColor = cMatDiffColor * diffInput;
     #elif defined(LIGHTPROBE)
-        float3 shdiff = GatherDiffLightProbes(cProbeIndex, normalize(iNormal), iWorldPos.xyz);
+        float3 shdiff = GatherDiffLightProbes(normalize(iNormal), iWorldPos.xyz);
         float4 diffColor = cMatDiffColor + float4(shdiff, 0);
     #else
         float4 diffColor = cMatDiffColor;

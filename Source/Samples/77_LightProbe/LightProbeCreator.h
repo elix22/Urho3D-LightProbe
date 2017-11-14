@@ -51,6 +51,7 @@ public:
 
     void Init(Scene *scene, const String& basepath);
     void GenerateLightProbes();
+    int GetSHProbeTextureWidth() const { return shProbeTextureWidth_; }
 
 protected:
     unsigned ParseLightProbesInScene();
@@ -62,9 +63,14 @@ protected:
     void HandleBuildEvent(StringHash eventType, VariantMap& eventData);
 
 protected:
+    Vector4 WorldPositionToColor(const Vector3 &wpos) const;
+
+protected:
     WeakPtr<Scene> scene_;
     String programPath_;
     String basepath_;
+    int shProbeTextureWidth_;
+    float worldPreScaler_;
 
     PODVector<Node*> buildRequiredNodeList_;
     PODVector<Node*> maintainedNodeList_;
