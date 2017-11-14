@@ -168,6 +168,14 @@ void CharacterDemo::CreateCharacter()
     SharedPtr<Material> clMat = cache->GetResource<Material>("LightProbe/Materials/BetaBody_MAT.xml")->Clone();
     object->SetMaterial(0, clMat);
     object->SetMaterial(1, clMat);
+
+    // set shader texture width param
+    Texture* texture = clMat->GetTexture(TU_ENVIRONMENT);
+    if (texture)
+    {
+        clMat->SetShaderParameter("TextureSize", (float)texture->GetWidth());
+    }
+
     object->SetMaterial(2, cache->GetResource<Material>("Platforms/Materials/BetaJoints_MAT.xml"));
     object->SetCastShadows(true);
     adjustNode->CreateComponent<AnimationController>();

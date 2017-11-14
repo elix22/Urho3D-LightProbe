@@ -33,7 +33,6 @@
 #include <Urho3D/Math/Ray.h>
 
 #include "Character.h"
-#include "LightProbeCreator.h"
 #include "CollisionLayer.h"
 
 //=============================================================================
@@ -78,13 +77,6 @@ void Character::DelayedStart()
     {
         AnimatedModel *amodel = node_->GetComponent<AnimatedModel>(true);
         charMaterial_ = amodel->GetMaterial();
-
-        // set shader texture width param
-        Texture* texture = charMaterial_->GetTexture(TU_ENVIRONMENT);
-        if (texture)
-        {
-            charMaterial_->SetShaderParameter("TextureSize", (float)texture->GetWidth());
-        }
 
         // the index order is the same as how LightProbeCreator got the order
         GetScene()->GetChildrenWithComponent(lightProbeNodeList_, "LightProbe", true);
