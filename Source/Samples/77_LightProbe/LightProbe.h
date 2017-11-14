@@ -74,7 +74,6 @@ protected:
     void SetState(unsigned state);
     Vector<SharedPtr<Image> >& GetCubeImages()      { return cubeImages_; }
     void SetNumSamples(int numSamples)              { numSamples_ = numSamples; }
-
 protected:
     bool generated_;
 
@@ -113,14 +112,24 @@ private:
         Vector3 normal_;
         Vector2 uv_;
     };
+    struct SphericalData
+    {
+        int     x_;
+        int     y_;
+        int     face_;
+        Vector3 normal_;
+    };
 
     // static vars
     static PODVector<GeomData> geomData_;
     static SharedArrayPtr<unsigned short> indexBuff_;
     static unsigned numIndeces_;
+    static PODVector<SphericalData> sphericalData_;
+    static Mutex sphDataLock_;
 
     // static methods
     static void SetupUnitBoxGeom(Model *model);
+    static int SetupSphericalData(const Vector<SharedPtr<Image> > &cubeImages, PODVector<Vector3> &coeffVec);
     static int CalculateSH(const Vector<SharedPtr<Image> > &cubeImages, PODVector<Vector3> &coeffVec);
     static void UpdateCoeffs(const Vector3 &vcol, const Vector3 &v, PODVector<Vector3> &coeffVec);
     static CubeMapFace GetCubefaceFromNormal(const Vector3 &normal);

@@ -11,10 +11,11 @@ There are six lightprobes in the scene that reflect some color to validate testi
 ### How the coffecients are generated, stored and applied:
 1) CubeCapture class generates cubemap textures.
 2) LightProbe class maps the texture onto a unit box and generates SH coefficients onto a spherical space.
-3) LightProbeCreator class gathers SH coefficients from all the LightProbe class and packs the information into a single ShprobeData.png file.
-4) shader program reads the ShprobeData.png data and applies eqn. 13 mentioned in the ref above.
+3) LightProbeCreator class gathers SH coefficients from all the LightProbes and packs the data into a single ShprobeData.png file.
+4) shader program reads the ShprobeData.png data and applies eqn. 13 mentioned in the above ref.
+5) Character class periodically searches for the nearest light probe and updates shader params.
   
-Coefficient generation takes about **240 msec.** for the scene. Your results may vary. The example does not generate the coefficients automatically, as it's already generated.  
+Coefficient generation takes about **~170 msec.** to generate six light probe coeffs in the scene. Your results may vary. The example does not generate the coefficients automatically, as it's already generated.  
 To enable coeff generation, set **generateLightProbes_=true** in the CharacterDemo class.  
 
 #### Some useful debugging info:
@@ -23,14 +24,10 @@ To enable coeff generation, set **generateLightProbes_=true** in the CharacterDe
 **Note:** enabling the above dump will obviously impact the build time.  
   
 ---  
-### Further optimization:
-LightProbe::CalculateSH() fn: instead of re-calcuating the xy pixels, normals and cube face, this could be saved and reused as they're same for all lightprobes.
-  
----  
 ### DX9 build problems:
-* huge shader compile spike when you 1st run the demo. I added a define to MANUL_UNROLL.
+* huge shader compile spike when you 1st run the demo. Created MANUAL_UNROLL preprocessor define and it's set to on, currently.
 * light globes, models which cover actual lights, changes to different color. I have no idea why it does this.
-* initially, passed cProbeIndex as int and I noticed it was glitchy. Changed it to float and it works fine. Coincidentally, changed glsl var to float to reflect shader programs to remain some what similar.
+* initially declared cProbeIndex as int and I noticed it was glitchy. Changed it to float and it works fine. Consequently, changed glsl var to float to reflect shader programs to remain some what similar.
 
   
 ---

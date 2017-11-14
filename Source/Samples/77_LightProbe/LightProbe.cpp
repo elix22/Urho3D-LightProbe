@@ -45,6 +45,8 @@
 PODVector<LightProbe::GeomData> LightProbe::geomData_;
 SharedArrayPtr<unsigned short> LightProbe::indexBuff_;
 unsigned LightProbe::numIndeces_ = 0;
+PODVector<LightProbe::SphericalData> LightProbe::sphericalData_;
+Mutex LightProbe::sphDataLock_;
 
 //=============================================================================
 //=============================================================================
@@ -53,7 +55,7 @@ LightProbe::LightProbe(Context* context)
     , generated_(false)
     , buildState_(SHBuild_Uninit)
     , threadProcess_(NULL)
-    , dumpShCoeff_(true)
+    , dumpShCoeff_(false)
 {
 }
 
@@ -100,9 +102,6 @@ void LightProbe::ForegroundProcess()
 {
     switch (GetState())
     {
-    case SHBuild_Uninit:
-        break;
-
     case SHBuild_CubeCapture:
         if (cubeCapture_ && cubeCapture_->IsFinished())
         {
@@ -128,9 +127,14 @@ void LightProbe::BackgroundProcess(void *data)
 
     if (parent->GetState() == SHBuild_BackgroundProcess)
     {
-        int nsamples = CalculateSH(parent->GetCubeImages(), parent->GetCoeffVec());
-        parent->SetNumSamples(nsamples);
+        int nsamples = SetupSphericalData(parent->GetCubeImages(), parent->GetCoeffVec());
 
+        if (nsamples == 0)
+        {
+            nsamples = CalculateSH(parent->GetCubeImages(), parent->GetCoeffVec());
+        }
+
+        parent->SetNumSamples(nsamples);
         parent->SetState(SHBuild_FinalizeCoeff);
     }
 }
@@ -294,84 +298,111 @@ void LightProbe::SetupUnitBoxGeom(Model *model)
 
 int LightProbe::CalculateSH(const Vector<SharedPtr<Image> > &cubeImages, PODVector<Vector3> &coeffVec)
 {
-    int texSizeX = cubeImages[0]->GetWidth();
-    int texSizeY = cubeImages[0]->GetHeight();
-    float texSizeXINV = 1.0f/(float)texSizeX;
-    float texSizeYINV = 1.0f/(float)texSizeY;
-
-    int numSamples = 0;
-
-    // build sh
-    for( unsigned i = 0; i < numIndeces_; i += 3 )
+    // build sh coeff
+    for( unsigned i = 0; i < sphericalData_.Size(); ++i )
     {
-        const unsigned short idx0 = indexBuff_[i+0];
-        const unsigned short idx1 = indexBuff_[i+1];
-        const unsigned short idx2 = indexBuff_[i+2];
+        const SphericalData &sd = sphericalData_[i];
+        SharedPtr<Image> curfaceImage = cubeImages[sd.face_];
 
-        const Vector3 &v0 = geomData_[idx0].pos_;	
-        const Vector3 &v1 = geomData_[idx1].pos_;	
-        const Vector3 &v2 = geomData_[idx2].pos_;	
+        UpdateCoeffs(curfaceImage->GetPixel(sd.x_, sd.y_).ToVector3(), sd.normal_, coeffVec);
+    }
 
-        const Vector3 &n0 = geomData_[idx0].normal_;   
-        const Vector3 &n1 = geomData_[idx1].normal_;   
-        const Vector3 &n2 = geomData_[idx2].normal_;  
+    return (int)sphericalData_.Size();
+}
 
-        const Vector2 &uv0 = geomData_[idx0].uv_;
-        const Vector2 &uv1 = geomData_[idx1].uv_;
-        const Vector2 &uv2 = geomData_[idx2].uv_;
+int LightProbe::SetupSphericalData(const Vector<SharedPtr<Image> > &cubeImages, PODVector<Vector3> &coeffVec)
+{
+    MutexLock lock(sphDataLock_);
 
-        float xMin = 1.0f;	
-        float xMax = 0.0f;	
-        float yMin = 1.0f;
-        float yMax = 0.0f;
+    // 1st thread to encounter size == 0 will build it
+    if (sphericalData_.Size() == 0)
+    {
+        int texSizeX = cubeImages[0]->GetWidth();
+        int texSizeY = cubeImages[0]->GetHeight();
+        float texSizeXINV = 1.0f/(float)texSizeX;
+        float texSizeYINV = 1.0f/(float)texSizeY;
 
-        if (uv0.x_ < xMin) xMin = uv0.x_; 
-        if (uv1.x_ < xMin) xMin = uv1.x_; 
-        if (uv2.x_ < xMin) xMin = uv2.x_; 
-
-        if (uv0.x_ > xMax) xMax = uv0.x_; 
-        if (uv1.x_ > xMax) xMax = uv1.x_; 
-        if (uv2.x_ > xMax) xMax = uv2.x_; 
-
-        if (uv0.y_ < yMin) yMin = uv0.y_; 
-        if (uv1.y_ < yMin) yMin = uv1.y_; 
-        if (uv2.y_ < yMin) yMin = uv2.y_; 
-
-        if (uv0.y_ > yMax) yMax = uv0.y_;
-        if (uv1.y_ > yMax) yMax = uv1.y_;
-        if (uv2.y_ > yMax) yMax = uv2.y_;
-
-        int pixMinX = (int)Max((float)floor(xMin*texSizeX)-1, 0.0f); 
-        int pixMaxX = (int)Min((float)ceil(xMax*texSizeX)+1, (float)texSizeX); 
-        int pixMinY = (int)Max((float)floor(yMin*texSizeY)-1, 0.0f); 
-        int pixMaxY = (int)Min((float)ceil(yMax*texSizeY)+1, (float)texSizeY);
-
-        // get cur face image
-        CubeMapFace face = GetCubefaceFromNormal(n0);
-        SharedPtr<Image> curfaceImage = cubeImages[face];
-        Vector3 pixelPos, bary;
-        Vector2 pixel;
-
-        for ( int x = pixMinX; x < pixMaxX; ++x ) 
+        // build sh coeff
+        for( unsigned i = 0; i < numIndeces_; i += 3 )
         {
-            for ( int y = pixMinY; y < pixMaxY; ++y ) 
+            const unsigned short idx0 = indexBuff_[i+0];
+            const unsigned short idx1 = indexBuff_[i+1];
+            const unsigned short idx2 = indexBuff_[i+2];
+
+            const Vector3 &v0 = geomData_[idx0].pos_;	
+            const Vector3 &v1 = geomData_[idx1].pos_;	
+            const Vector3 &v2 = geomData_[idx2].pos_;	
+
+            const Vector3 &n0 = geomData_[idx0].normal_;   
+            const Vector3 &n1 = geomData_[idx1].normal_;   
+            const Vector3 &n2 = geomData_[idx2].normal_;  
+
+            const Vector2 &uv0 = geomData_[idx0].uv_;
+            const Vector2 &uv1 = geomData_[idx1].uv_;
+            const Vector2 &uv2 = geomData_[idx2].uv_;
+
+            float xMin = 1.0f;	
+            float xMax = 0.0f;	
+            float yMin = 1.0f;
+            float yMax = 0.0f;
+
+            if (uv0.x_ < xMin) xMin = uv0.x_; 
+            if (uv1.x_ < xMin) xMin = uv1.x_; 
+            if (uv2.x_ < xMin) xMin = uv2.x_; 
+
+            if (uv0.x_ > xMax) xMax = uv0.x_; 
+            if (uv1.x_ > xMax) xMax = uv1.x_; 
+            if (uv2.x_ > xMax) xMax = uv2.x_; 
+
+            if (uv0.y_ < yMin) yMin = uv0.y_; 
+            if (uv1.y_ < yMin) yMin = uv1.y_; 
+            if (uv2.y_ < yMin) yMin = uv2.y_; 
+
+            if (uv0.y_ > yMax) yMax = uv0.y_;
+            if (uv1.y_ > yMax) yMax = uv1.y_;
+            if (uv2.y_ > yMax) yMax = uv2.y_;
+
+            int pixMinX = (int)Max((float)floor(xMin*texSizeX)-1, 0.0f); 
+            int pixMaxX = (int)Min((float)ceil(xMax*texSizeX)+1, (float)texSizeX); 
+            int pixMinY = (int)Max((float)floor(yMin*texSizeY)-1, 0.0f); 
+            int pixMaxY = (int)Min((float)ceil(yMax*texSizeY)+1, (float)texSizeY);
+
+            // get cur face image
+            CubeMapFace face = GetCubefaceFromNormal(n0);
+            SharedPtr<Image> curfaceImage = cubeImages[face];
+            Vector3 normal, bary;
+            Vector2 pixel;
+
+            for ( int x = pixMinX; x < pixMaxX; ++x ) 
             {
-                pixel = Vector2((float)x * texSizeXINV, (float)y * texSizeYINV);
-                bary = Barycentric(uv0, uv1, uv2, pixel);
-
-                if (!Equals(bary.x_, M_INFINITY) && BaryInsideTriangle(bary))
+                for ( int y = pixMinY; y < pixMaxY; ++y ) 
                 {
-                    pixelPos = bary.x_ * v0 + bary.y_ * v1 + bary.z_ * v2;
+                    pixel = Vector2((float)x * texSizeXINV, (float)y * texSizeYINV);
+                    bary = Barycentric(uv0, uv1, uv2, pixel);
 
-                    UpdateCoeffs(curfaceImage->GetPixel(x, y).ToVector3(), pixelPos.Normalized(), coeffVec);
+                    if (!Equals(bary.x_, M_INFINITY) && BaryInsideTriangle(bary))
+                    {
+                        normal = (bary.x_ * v0 + bary.y_ * v1 + bary.z_ * v2).Normalized();
+                        
+                        UpdateCoeffs(curfaceImage->GetPixel(x, y).ToVector3(), normal, coeffVec);
 
-                    ++numSamples;
+                        // save sph data
+                        sphericalData_.Resize(sphericalData_.Size() + 1);
+                        SphericalData &sphData = sphericalData_[sphericalData_.Size() - 1];
+
+                        sphData.x_      = x;
+                        sphData.y_      = y;
+                        sphData.face_   = face;
+                        sphData.normal_ = normal;
+                    }
                 }
             }
         }
+
+        return (int)sphericalData_.Size();
     }
 
-    return numSamples;
+    return 0;
 }
 
 //=============================================================================

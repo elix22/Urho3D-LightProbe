@@ -73,7 +73,7 @@ protected:
     float worldPreScaler_;
 
     PODVector<Node*> buildRequiredNodeList_;
-    PODVector<Node*> maintainedNodeList_;
+    PODVector<Node*> origNodeList_;
     PODVector<Node*> processingNodeList_;
 
     unsigned initialCnt_;

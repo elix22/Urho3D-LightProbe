@@ -81,7 +81,7 @@ unsigned LightProbeCreator::ParseLightProbesInScene()
     for ( unsigned i = 0; i < result.Size(); ++i )
     {
         buildRequiredNodeList_.Push(result[i]);
-        maintainedNodeList_.Push(result[i]);
+        origNodeList_.Push(result[i]);
     }
     initialCnt_ = buildRequiredNodeList_.Size();
 
@@ -117,17 +117,16 @@ void LightProbeCreator::WriteSHTableImage()
 
     for ( int i = 0; i < (int)initialCnt_; ++i )
     {
-        LightProbe *lightProbe = maintainedNodeList_[i]->GetComponent<LightProbe>();
+        LightProbe *lightProbe = origNodeList_[i]->GetComponent<LightProbe>();
         PODVector<Vector3> &coeffVec = lightProbe->GetCoeffVec();
+        assert(coeffVec.Size() == 9 && "coeff vector size error!");
 
         // write coeffs - normalized to [0, 1]
         for ( int j = 0; j < 9; ++j )
         {
-            float c0 = coeffVec[j].x_ * 0.1f + 0.5f;
-            float c1 = coeffVec[j].y_ * 0.1f + 0.5f;
-            float c2 = coeffVec[j].z_ * 0.1f + 0.5f;
+            Vector3 c = coeffVec[j] * 0.1f + Vector3::ONE * 0.5f;
             // **reverse in shader: coeff = (c - Vector3(0.5,0.5,0.5)) * 10.0f;
-            image->SetPixel((i * 9) + j, 0, Color(c0, c1, c2));
+            image->SetPixel((i * 9) + j, 0, Color(c.x_, c.y_, c.z_));
         }
     }
     image->SavePNG(programPath_ + basepath_ + "/Textures/SHprobeData.png");
@@ -135,6 +134,10 @@ void LightProbeCreator::WriteSHTableImage()
 
 Vector4 LightProbeCreator::WorldPositionToColor(const Vector3 &wpos) const
 {
+    // I considered deleting this fn but decided to keep it, as it might 
+    // become useful for GI generation later (once I figure out how to apply it).
+    // **write as: col = Color(vec4.xyz + Vector3::ONE * 0.5f, vec4.w);
+    // **reverse in shader: wpos = (col.xyz - Vector3::ONE*0.5f) * worldPreScaler_/col.w;
     const Vector4 wpos4 = Vector4(wpos.x_, wpos.y_, wpos.z_, 1.0) * (1.0f / worldPreScaler_);
     Vector4 convColor = wpos4;
     int incrFactor = 0;
@@ -153,7 +156,7 @@ Vector4 LightProbeCreator::WorldPositionToColor(const Vector3 &wpos) const
         convColor = wpos4 * (1.0f - ((float)incrFactor - 1.0f)/255.0f);
     }
 
-    // range of conv color = [1, 1/255], never zero
+    // range of conv vec4.w = [1, 1/255], never zero
     if (incrFactor == 0)
     {
         convColor.w_ = 1.0f;
