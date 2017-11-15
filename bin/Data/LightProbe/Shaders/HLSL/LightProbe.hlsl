@@ -66,12 +66,20 @@ float3 SHDiffuse(float3 normal, float3 worldPos)
     // world pos
     float3 seg = cProbePosition - worldPos;
     float dist = length(seg);
+    const float falloffDist = 1.5;
 
-    if (dist > cMinProbeDistance)
+    if (dist > cMinProbeDistance + falloffDist)
     {
         return float3(0,0,0);
     }
-    dist = clamp(dist, 0.75, cMinProbeDistance);
+
+    dist = clamp(dist, 0.75, cMinProbeDistance + falloffDist);
+
+    // exponential falloff
+    if (dist > cMinProbeDistance)
+    {
+        dist = cMinProbeDistance + pow(0.5 + (dist - cMinProbeDistance), cMinProbeDistance);
+    }
 
     // read sh
     float3 sh[9];
@@ -98,7 +106,7 @@ float3 SHDiffuse(float3 normal, float3 worldPos)
 
 float3 GatherDiffLightProbes(float3 normal, float3 worldPos)
 {
-    if (cProbeIndex == -1)
+    if (cProbeIndex < 0)
     {
         return float3(0,0,0);
     }

@@ -1,11 +1,11 @@
 #ifdef COMPILEPS
 //=============================================================================
 //=============================================================================
-uniform int cProbeIndex;
+uniform float cProbeIndex;
 uniform vec3 cProbePosition;
 uniform float cMinProbeDistance;
-uniform float cTextureSize;
 uniform float cSHIntensity;
+uniform float cTextureSize;
 
 #ifdef GL_ES
 #define USE_TEXTURE2D
@@ -72,12 +72,20 @@ vec3 SHDiffuse(vec3 normal, vec3 worldPos)
     // world pos
     vec3 seg = cProbePosition - worldPos;
     float dist = length(seg);
-    if (dist > cMinProbeDistance)
+    const float falloffDist = 1.5;
+
+    if (dist > cMinProbeDistance + falloffDist)
     {
         return vec3(0,0,0);
     }
 
-    dist = clamp(dist, 0.75, cMinProbeDistance);
+    dist = clamp(dist, 0.75, cMinProbeDistance + falloffDist);
+
+    // exponential falloff
+    if (dist > cMinProbeDistance)
+    {
+        dist = cMinProbeDistance + pow(0.5 + (dist - cMinProbeDistance), cMinProbeDistance);
+    }
 
     // read sh
     vec3 sh[9];
@@ -91,7 +99,7 @@ vec3 SHDiffuse(vec3 normal, vec3 worldPos)
 
 vec3 GatherDiffLightProbes(vec3 normal, vec3 worldPos)
 {
-    if (cProbeIndex == -1)
+    if (cProbeIndex < 0)
     {
         return vec3(0,0,0);
     }
