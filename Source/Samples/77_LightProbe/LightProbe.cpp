@@ -317,10 +317,13 @@ int LightProbe::SetupSphericalData(const Vector<SharedPtr<Image> > &cubeImages, 
     // 1st thread to encounter size == 0 will build it
     if (sphericalData_.Size() == 0)
     {
-        int texSizeX = cubeImages[0]->GetWidth();
-        int texSizeY = cubeImages[0]->GetHeight();
-        float texSizeXINV = 1.0f/(float)texSizeX;
-        float texSizeYINV = 1.0f/(float)texSizeY;
+        const int texSizeX = cubeImages[0]->GetWidth();
+        const int texSizeY = cubeImages[0]->GetHeight();
+        const float texSizeXINV = 1.0f/(float)texSizeX;
+        const float texSizeYINV = 1.0f/(float)texSizeY;
+
+        // reserve 5% over what's expected
+        sphericalData_.Reserve((int)((float)texSizeX *(float)texSizeY * 6.0f * 1.05f));
 
         // build sh coeff
         for( unsigned i = 0; i < numIndeces_; i += 3 )

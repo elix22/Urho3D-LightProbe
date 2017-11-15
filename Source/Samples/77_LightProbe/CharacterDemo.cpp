@@ -132,10 +132,6 @@ void CharacterDemo::CreateScene()
     XMLFile *xmlLevel = cache->GetResource<XMLFile>("LightProbe/testScene.xml");
     scene_->LoadXML(xmlLevel->GetRoot());
 
-    // init and start lp creator
-    LightProbeCreator *lightProbeCreator = GetSubsystem<LightProbeCreator>();
-    lightProbeCreator->Init(scene_, "Data/LightProbe");
-
     //generateLightProbes_ = true;
     if (generateLightProbes_)
     {
@@ -143,6 +139,10 @@ void CharacterDemo::CreateScene()
         {
             instructionText_->SetText("building");
         }
+
+        // init and start lp creator
+        LightProbeCreator *lightProbeCreator = GetSubsystem<LightProbeCreator>();
+        lightProbeCreator->Init(scene_, "Data/LightProbe");
 
         // start the timer and go
         hrTimer_.Reset();
@@ -168,6 +168,7 @@ void CharacterDemo::CreateCharacter()
     SharedPtr<Material> clMat = cache->GetResource<Material>("LightProbe/Materials/BetaBody_MAT.xml")->Clone();
     object->SetMaterial(0, clMat);
     object->SetMaterial(1, clMat);
+    object->SetMaterial(2, cache->GetResource<Material>("LightProbe/Materials/BetaJoints_MAT.xml")->Clone());
 
     // set shader texture width param
     Texture* texture = clMat->GetTexture(TU_ENVIRONMENT);
@@ -176,7 +177,6 @@ void CharacterDemo::CreateCharacter()
         clMat->SetShaderParameter("TextureSize", (float)texture->GetWidth());
     }
 
-    object->SetMaterial(2, cache->GetResource<Material>("Platforms/Materials/BetaJoints_MAT.xml"));
     object->SetCastShadows(true);
     adjustNode->CreateComponent<AnimationController>();
 
