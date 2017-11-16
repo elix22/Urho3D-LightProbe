@@ -25,12 +25,13 @@
 
 #include "../Core/Thread.h"
 #include "../Core/Mutex.h"
+#include "../Container/RefCounted.h"
 
 namespace Urho3D
 {
 
 template<class T>
-class HelperThread : public Thread
+class HelperThread : public Thread, public RefCounted
 {
 public:
     typedef void (T::*ProcessFn)(void *);

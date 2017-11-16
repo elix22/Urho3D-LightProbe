@@ -87,7 +87,7 @@ protected:
     String basepath_;
 
     // thread
-    HelperThread<LightProbe> *threadProcess_;
+    SharedPtr<HelperThread<LightProbe> > threadProcess_;
     Mutex mutexStateLock_;
 
     // build state

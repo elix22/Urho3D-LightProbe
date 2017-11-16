@@ -54,13 +54,13 @@ LightProbe::LightProbe(Context* context)
     : StaticModel(context)
     , generated_(false)
     , buildState_(SHBuild_Uninit)
-    , threadProcess_(NULL)
     , dumpShCoeff_(false)
 {
 }
 
 LightProbe::~LightProbe()
 {
+    threadProcess_ = NULL;
 }
 
 void LightProbe::RegisterObject(Context* context)
@@ -195,11 +195,7 @@ void LightProbe::CreateThread()
 
 void LightProbe::DestroyThread()
 {
-    if (threadProcess_)
-    {
-        delete threadProcess_;
-        threadProcess_ = NULL;
-    }
+    threadProcess_ = NULL;
 }
 
 void LightProbe::ClearCoeff()
@@ -421,7 +417,7 @@ void LightProbe::UpdateCoeffs(const Vector3 &vcol, const Vector3 &v, PODVector<V
     const float c1  = 0.488603f;
     const float c2  = 1.092548f;
     const float c3  = 0.315392f;
-    const float c33 = 0.315392f * 3.0f;
+    const float c33 = c3 * 3.0f;
     const float c4  = 0.546274f;
 
     /* L_{00}.  Note that Y_{00} = 0.282095 */
