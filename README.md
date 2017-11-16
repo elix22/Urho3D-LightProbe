@@ -31,11 +31,9 @@ To enable coeff generation, set **generateLightProbes_=true** in the CharacterDe
 
   
 ---
-### Screenshots
+### Screenshot
 
 ![alt tag](https://github.com/Lumak/Urho3D-LightProbe/blob/master/screenshot/lightprobescreen0.png)
-![alt tag](https://github.com/Lumak/Urho3D-LightProbe/blob/master/screenshot/lightprobescreen1.png)
-![alt tag](https://github.com/Lumak/Urho3D-LightProbe/blob/master/screenshot/lightprobescreen2.png)
 
 ---
 ### To Build
