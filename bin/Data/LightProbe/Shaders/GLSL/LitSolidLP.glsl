@@ -116,8 +116,12 @@ void PS()
         #endif
         vec4 diffColor = cMatDiffColor * diffInput;
     #elif defined(LIGHTPROBE)
-        vec3 shdiff = GatherDiffLightProbes(normalize(vNormal), vWorldPos.xyz);
-        vec4 diffColor = cMatDiffColor + vec4(shdiff, 0);
+        vec4 sumDiffCol = cMatDiffColor;
+        if (cProbeIndex > -1)
+        {
+            sumDiffCol.xyz += SHDiffuse(normalize(vNormal), vWorldPos.xyz);
+        }
+        vec4 diffColor = sumDiffCol;
     #else
         vec4 diffColor = cMatDiffColor;
     #endif

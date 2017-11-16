@@ -7,14 +7,12 @@ uniform float cMinProbeDistance;
 uniform float cSHIntensity;
 uniform float cTextureSize;
 
-#ifdef GL_ES
-#define USE_TEXTURE2D
-#endif
-
 #line 1000
 //=============================================================================
+// Based on: An Efficient Representation for Irradiance Environment Maps.  
+// ref: http://graphics.stanford.edu/papers/envmap/
 //=============================================================================
-vec3 irradcoeffs(vec3 L00, vec3 L1_1, vec3 L10, vec3 L11, 
+vec3 IrradCoeffs(vec3 L00, vec3 L1_1, vec3 L10, vec3 L11, 
                  vec3 L2_2, vec3 L2_1, vec3 L20, vec3 L21, vec3 L22,
                  vec3 n) 
 {
@@ -57,7 +55,7 @@ vec3 irradcoeffs(vec3 L00, vec3 L1_1, vec3 L10, vec3 L11,
 
 vec3 GetSH(int i)
 {
-    #ifdef USE_TEXTURE2D
+    #ifdef GL_ES
     vec3 sh = texture2D(sEnvMap, vec2(float(cProbeIndex*9 + i), 0)/cTextureSize).xyz;
     #else
     vec3 sh = texelFetch(sEnvMap, ivec2(cProbeIndex*9 + i, 0), 0).xyz;
@@ -70,8 +68,7 @@ vec3 GetSH(int i)
 vec3 SHDiffuse(vec3 normal, vec3 worldPos)
 {
     // world pos
-    vec3 seg = cProbePosition - worldPos;
-    float dist = length(seg);
+    float dist = max(0.75, length(cProbePosition - worldPos));
     const float falloffDist = 1.5;
 
     if (dist > cMinProbeDistance + falloffDist)
@@ -79,12 +76,10 @@ vec3 SHDiffuse(vec3 normal, vec3 worldPos)
         return vec3(0,0,0);
     }
 
-    dist = clamp(dist, 0.75, cMinProbeDistance + falloffDist);
-
     // exponential falloff
     if (dist > cMinProbeDistance)
     {
-        dist = cMinProbeDistance + pow(0.5 + (dist - cMinProbeDistance), cMinProbeDistance);
+        dist = cMinProbeDistance + pow(0.5 + (dist - cMinProbeDistance), 4);
     }
 
     // read sh
@@ -94,17 +89,9 @@ vec3 SHDiffuse(vec3 normal, vec3 worldPos)
         sh[i] = GetSH(i);
     }
 
-    return irradcoeffs(sh[0], sh[1], sh[2], sh[3], sh[4], sh[5], sh[6], sh[7], sh[8], normal) * 1.0/dist;
+    // linear decay 
+    return IrradCoeffs(sh[0], sh[1], sh[2], sh[3], sh[4], sh[5], sh[6], sh[7], sh[8], normal) * cSHIntensity/dist;
 }
 
-vec3 GatherDiffLightProbes(vec3 normal, vec3 worldPos)
-{
-    if (cProbeIndex < 0)
-    {
-        return vec3(0,0,0);
-    }
-
-    return SHDiffuse(normal, worldPos) * cSHIntensity;
-}
 #endif //COMPILEPS
 

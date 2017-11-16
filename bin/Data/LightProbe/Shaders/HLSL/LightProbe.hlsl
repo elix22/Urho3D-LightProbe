@@ -9,8 +9,10 @@ uniform float cTextureSize;
 
 #line 1000
 //=============================================================================
+// Based on: An Efficient Representation for Irradiance Environment Maps.  
+// ref: http://graphics.stanford.edu/papers/envmap/
 //=============================================================================
-float3 irradcoeffs(float3 L00, float3 L1_1, float3 L10, float3 L11, 
+float3 IrradCoeffs(float3 L00, float3 L1_1, float3 L10, float3 L11, 
                    float3 L2_2, float3 L2_1, float3 L20, float3 L21, float3 L22,
                    float3 n) 
 {
@@ -64,8 +66,7 @@ float3 GetSH(int i)
 float3 SHDiffuse(float3 normal, float3 worldPos)
 {
     // world pos
-    float3 seg = cProbePosition - worldPos;
-    float dist = length(seg);
+    float dist = max(0.75, length(cProbePosition - worldPos));
     const float falloffDist = 1.5;
 
     if (dist > cMinProbeDistance + falloffDist)
@@ -73,12 +74,10 @@ float3 SHDiffuse(float3 normal, float3 worldPos)
         return float3(0,0,0);
     }
 
-    dist = clamp(dist, 0.75, cMinProbeDistance + falloffDist);
-
     // exponential falloff
     if (dist > cMinProbeDistance)
     {
-        dist = cMinProbeDistance + pow(0.5 + (dist - cMinProbeDistance), cMinProbeDistance);
+        dist = cMinProbeDistance + pow(0.5 + (dist - cMinProbeDistance), 4);
     }
 
     // read sh
@@ -101,17 +100,9 @@ float3 SHDiffuse(float3 normal, float3 worldPos)
         sh[i] = GetSH(i);
     }
 #endif
-    return irradcoeffs(sh[0], sh[1], sh[2], sh[3], sh[4], sh[5], sh[6], sh[7], sh[8], normal) * 1.0/dist;
-}
 
-float3 GatherDiffLightProbes(float3 normal, float3 worldPos)
-{
-    if (cProbeIndex < 0)
-    {
-        return float3(0,0,0);
-    }
-
-    return SHDiffuse(normal, worldPos) * cSHIntensity;
+    // linear decay 
+    return IrradCoeffs(sh[0], sh[1], sh[2], sh[3], sh[4], sh[5], sh[6], sh[7], sh[8], normal) * cSHIntensity/dist;
 }
 
 #endif //COMPILEPS
