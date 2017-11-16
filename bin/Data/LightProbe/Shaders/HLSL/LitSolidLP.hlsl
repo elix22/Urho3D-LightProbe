@@ -191,12 +191,11 @@ void PS(
         #endif
         float4 diffColor = cMatDiffColor * diffInput;
     #elif defined(LIGHTPROBE)
-        float4 sumDiffCol = cMatDiffColor;
+        float4 diffColor = cMatDiffColor;
         if (cProbeIndex > -1)
         {
-            sumDiffCol.xyz += SHDiffuse(normalize(iNormal), iWorldPos.xyz);
+            diffColor.xyz += SHDiffuse(normalize(iNormal), iWorldPos.xyz);
         }
-        float4 diffColor = sumDiffCol;
     #else
         float4 diffColor = cMatDiffColor;
     #endif
