@@ -140,7 +140,7 @@ private:
     //=============================================================================
     static inline Vector3 Barycentric(const Vector2 &v0, const Vector2 &v1, const Vector2 &v2, const Vector2 &vp)
     {
-        Vector3 bary(M_INFINITY, M_INFINITY, M_INFINITY);
+        Vector3 bary(Vector3::ONE);
 
         // edge seg
         Vector2 e0 = v0 - vp;

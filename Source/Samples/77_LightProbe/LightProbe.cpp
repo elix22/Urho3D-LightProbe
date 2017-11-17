@@ -373,7 +373,7 @@ int LightProbe::SetupSphericalData(const Vector<SharedPtr<Image> > &cubeImages, 
                 {
                     bary = Barycentric(uv0, uv1, uv2, Vector2((float)x * texSizeXINV, (float)y * texSizeYINV));
 
-                    if (!Equals(bary.x_, M_INFINITY) && BaryInsideTriangle(bary))
+                    if (BaryInsideTriangle(bary))
                     {
                         normal = (bary.x_ * v0 + bary.y_ * v1 + bary.z_ * v2).Normalized();
                         

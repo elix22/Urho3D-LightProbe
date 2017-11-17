@@ -2,7 +2,7 @@
   
 ---
 ### Description
-SH coefficients generated from cubemap texture and applied at run time via shader program to achieve interreflected transfer. Based on: An Efficient Representation for Irradiance Environment Maps.  
+SH coefficients generated from cubemap texture and applied at run time via shader program to achieve interreflected transfer or irradiance used as light probe. Based on: An Efficient Representation for Irradiance Environment Maps.  
 ref: http://graphics.stanford.edu/papers/envmap/  
 
 There are six lightprobes in the scene that reflect some color to validate testing. You can spot them easily.  
@@ -12,7 +12,7 @@ There are six lightprobes in the scene that reflect some color to validate testi
 1) CubeCapture class generates cubemap textures.
 2) LightProbe class maps the texture onto a unit box and generates SH coefficients onto a spherical space.
 3) LightProbeCreator class gathers SH coefficients from all the LightProbes and packs the data into a single ShprobeData.png file.
-4) shader program reads the ShprobeData.png data and applies eqn. 13 mentioned in the above ref.
+4) shader program reads the ShprobeData.png data and applies irradiance (eqn. 13) mentioned in the above ref.
 5) Character class periodically searches for the nearest light probe and updates shader params.
   
 Coefficient generation takes about **~170 msec.** to generate six light probe coeffs in the scene. Your results may vary. The example does not generate the coefficients automatically, as it's already generated.  
@@ -27,7 +27,7 @@ To enable coeff generation, set **generateLightProbes_=true** in the CharacterDe
 ### DX9 build problems:
 * huge shader compile spike when you 1st run the demo. Created MANUAL_UNROLL preprocessor define and it's set to on, currently.
 * light globes, models which cover actual lights, changes to different color. I have no idea why it does this.
-* initially declared cProbeIndex as int and I noticed it was glitchy. Changed it to float and it works fine. Consequently, changed glsl var to float to reflect shader programs to remain some what similar.
+* initially declared cProbeIndex as int and I noticed it was glitchy. Changed it to float and it works fine. Consequently, changed glsl var to float to reflect shader programs to remain consistent.
 
   
 ---
