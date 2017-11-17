@@ -254,15 +254,13 @@ void LightProbe::SetupUnitBoxGeom(Model *model)
 
             if (elementMask & MASK_POSITION)
             {
-                const Vector3 &pos = *reinterpret_cast<const Vector3*>(dataAlign);
+                geom.pos_ = *reinterpret_cast<const Vector3*>(dataAlign);
                 dataAlign += sizeof(Vector3);
-                geom.pos_ = pos;
             }
             if (elementMask & MASK_NORMAL)
             {
-                const Vector3 &norm = *reinterpret_cast<const Vector3*>(dataAlign);
+                geom.normal_ = *reinterpret_cast<const Vector3*>(dataAlign);
                 dataAlign += sizeof(Vector3);
-                geom.normal_ = norm;
             }
             if (elementMask & MASK_COLOR)
             {
@@ -270,8 +268,7 @@ void LightProbe::SetupUnitBoxGeom(Model *model)
             }
             if (elementMask & MASK_TEXCOORD1)
             {
-                const Vector2 &uv = *reinterpret_cast<const Vector2*>(dataAlign);
-                geom.uv_ = uv;
+                geom.uv_ = *reinterpret_cast<const Vector2*>(dataAlign);
             }
         }
         vbuffer->Unlock();
@@ -298,9 +295,8 @@ int LightProbe::CalculateSH(const Vector<SharedPtr<Image> > &cubeImages, PODVect
     for( unsigned i = 0; i < sphericalData_.Size(); ++i )
     {
         const SphericalData &sd = sphericalData_[i];
-        SharedPtr<Image> curfaceImage = cubeImages[sd.face_];
 
-        UpdateCoeffs(curfaceImage->GetPixel(sd.x_, sd.y_).ToVector3(), sd.normal_, coeffVec);
+        UpdateCoeffs(cubeImages[sd.face_]->GetPixel(sd.x_, sd.y_).ToVector3(), sd.normal_, coeffVec);
     }
 
     return (int)sphericalData_.Size();
@@ -333,8 +329,8 @@ int LightProbe::SetupSphericalData(const Vector<SharedPtr<Image> > &cubeImages, 
             const Vector3 &v2 = geomData_[idx2].pos_;	
 
             const Vector3 &n0 = geomData_[idx0].normal_;   
-            const Vector3 &n1 = geomData_[idx1].normal_;   
-            const Vector3 &n2 = geomData_[idx2].normal_;  
+            //const Vector3 &n1 = geomData_[idx1].normal_;   
+            //const Vector3 &n2 = geomData_[idx2].normal_;  
 
             const Vector2 &uv0 = geomData_[idx0].uv_;
             const Vector2 &uv1 = geomData_[idx1].uv_;
@@ -361,23 +357,21 @@ int LightProbe::SetupSphericalData(const Vector<SharedPtr<Image> > &cubeImages, 
             if (uv1.y_ > yMax) yMax = uv1.y_;
             if (uv2.y_ > yMax) yMax = uv2.y_;
 
-            int pixMinX = (int)Max((float)floor(xMin*texSizeX)-1, 0.0f); 
-            int pixMaxX = (int)Min((float)ceil(xMax*texSizeX)+1, (float)texSizeX); 
-            int pixMinY = (int)Max((float)floor(yMin*texSizeY)-1, 0.0f); 
-            int pixMaxY = (int)Min((float)ceil(yMax*texSizeY)+1, (float)texSizeY);
+            const int pixMinX = (int)Max((float)floor(xMin*texSizeX)-1, 0.0f); 
+            const int pixMaxX = (int)Min((float)ceil(xMax*texSizeX)+1, (float)texSizeX); 
+            const int pixMinY = (int)Max((float)floor(yMin*texSizeY)-1, 0.0f); 
+            const int pixMaxY = (int)Min((float)ceil(yMax*texSizeY)+1, (float)texSizeY);
 
             // get cur face image
             CubeMapFace face = GetCubefaceFromNormal(n0);
-            SharedPtr<Image> curfaceImage = cubeImages[face];
+            const SharedPtr<Image> curfaceImage = cubeImages[face];
             Vector3 normal, bary;
-            Vector2 pixel;
 
             for ( int x = pixMinX; x < pixMaxX; ++x ) 
             {
                 for ( int y = pixMinY; y < pixMaxY; ++y ) 
                 {
-                    pixel = Vector2((float)x * texSizeXINV, (float)y * texSizeYINV);
-                    bary = Barycentric(uv0, uv1, uv2, pixel);
+                    bary = Barycentric(uv0, uv1, uv2, Vector2((float)x * texSizeXINV, (float)y * texSizeYINV));
 
                     if (!Equals(bary.x_, M_INFINITY) && BaryInsideTriangle(bary))
                     {

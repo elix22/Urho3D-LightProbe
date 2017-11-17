@@ -35,7 +35,7 @@ class LightProbe;
 //=============================================================================
 URHO3D_EVENT(E_LIGHTPROBESTATUS, LightProbeStatus)
 {
-    URHO3D_PARAM(P_INITIAL, InitCnt);       // initial count
+    URHO3D_PARAM(P_TOTAL, TotalCnt);        // total count
     URHO3D_PARAM(P_COMPLETED, CompleteCnt); // initial count
 }
 
@@ -58,7 +58,7 @@ protected:
     void QueueNodeProcess();
     void StartSHBuild(Node *node);
     void WriteSHTableImage();
-    void MarkNodeComplete(Node *node);
+    void RemoveCompletedNode(Node *node);
     void SendEventMsg();
     void HandleBuildEvent(StringHash eventType, VariantMap& eventData);
 
@@ -76,7 +76,7 @@ protected:
     PODVector<Node*> origNodeList_;
     PODVector<Node*> processingNodeList_;
 
-    unsigned initialCnt_;
+    unsigned totalCnt_;
     unsigned numProcessed_;
     unsigned maxThreads_;
 };

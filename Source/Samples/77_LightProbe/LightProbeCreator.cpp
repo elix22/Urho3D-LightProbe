@@ -39,7 +39,7 @@
 //=============================================================================
 LightProbeCreator::LightProbeCreator(Context* context)
     : Object(context)
-    , initialCnt_(0)
+    , totalCnt_(0)
     , numProcessed_(0)
     , maxThreads_(8)
     , shProbeTextureWidth_(0)
@@ -80,12 +80,13 @@ unsigned LightProbeCreator::ParseLightProbesInScene()
 
     for ( unsigned i = 0; i < result.Size(); ++i )
     {
-        buildRequiredNodeList_.Push(result[i]);
+        // retain the order provided by scene query, the same order is used by the Character class
         origNodeList_.Push(result[i]);
+        buildRequiredNodeList_.Push(result[i]);
     }
-    initialCnt_ = buildRequiredNodeList_.Size();
+    totalCnt_ = origNodeList_.Size();
 
-    return initialCnt_;
+    return totalCnt_;
 }
 
 void LightProbeCreator::QueueNodeProcess()
@@ -112,13 +113,13 @@ void LightProbeCreator::WriteSHTableImage()
     SharedPtr<Image> image(new Image(context_));
 
     // size is calculated as 64 for testing
-    shProbeTextureWidth_ = NextPowerOfTwo(initialCnt_ * 9);
+    shProbeTextureWidth_ = NextPowerOfTwo(totalCnt_ * 9);
     image->SetSize(shProbeTextureWidth_, 1, 4);
 
-    for ( int i = 0; i < (int)initialCnt_; ++i )
+    for ( int i = 0; i < (int)totalCnt_; ++i )
     {
         LightProbe *lightProbe = origNodeList_[i]->GetComponent<LightProbe>();
-        PODVector<Vector3> &coeffVec = lightProbe->GetCoeffVec();
+        const PODVector<Vector3> &coeffVec = lightProbe->GetCoeffVec();
         assert(coeffVec.Size() == 9 && "coeff vector size error!");
 
         // write coeffs - normalized to [0, 1]
@@ -169,7 +170,7 @@ Vector4 LightProbeCreator::WorldPositionToColor(const Vector3 &wpos) const
     return convColor;
 }
 
-void LightProbeCreator::MarkNodeComplete(Node *node)
+void LightProbeCreator::RemoveCompletedNode(Node *node)
 {
     if (processingNodeList_.Remove(node))
     {
@@ -179,7 +180,7 @@ void LightProbeCreator::MarkNodeComplete(Node *node)
     // send event
     SendEventMsg();
 
-    if (initialCnt_ != numProcessed_)
+    if (numProcessed_ != totalCnt_)
     {
         QueueNodeProcess();
     }
@@ -193,8 +194,8 @@ void LightProbeCreator::SendEventMsg()
 {
     using namespace LightProbeStatus;
 
-    VariantMap& eventData = GetEventDataMap();
-    eventData[P_INITIAL] = initialCnt_;
+    VariantMap& eventData  = GetEventDataMap();
+    eventData[P_TOTAL]     = totalCnt_;
     eventData[P_COMPLETED] = numProcessed_;
 
     SendEvent(E_LIGHTPROBESTATUS, eventData);
@@ -205,5 +206,5 @@ void LightProbeCreator::HandleBuildEvent(StringHash eventType, VariantMap& event
     using namespace SHBuildDone;
     Node *node = (Node*)eventData[P_NODE].GetVoidPtr();
 
-    MarkNodeComplete(node);
+    RemoveCompletedNode(node);
 }

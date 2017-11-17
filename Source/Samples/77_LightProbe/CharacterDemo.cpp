@@ -165,16 +165,18 @@ void CharacterDemo::CreateCharacter()
     // Create the rendering component + animation controller
     AnimatedModel* object = adjustNode->CreateComponent<AnimatedModel>();
     object->SetModel(cache->GetResource<Model>("Platforms/Models/BetaLowpoly/Beta.mdl"));
-    SharedPtr<Material> clMat = cache->GetResource<Material>("LightProbe/Materials/BetaBody_MAT.xml")->Clone();
-    object->SetMaterial(0, clMat);
-    object->SetMaterial(1, clMat);
-    object->SetMaterial(2, cache->GetResource<Material>("LightProbe/Materials/BetaJoints_MAT.xml")->Clone());
+    SharedPtr<Material> c1Mat = cache->GetResource<Material>("LightProbe/Materials/BetaBody_MAT.xml")->Clone();
+    SharedPtr<Material> c2Mat = cache->GetResource<Material>("LightProbe/Materials/BetaJoints_MAT.xml")->Clone();
+    object->SetMaterial(0, c1Mat);
+    object->SetMaterial(1, c1Mat);
+    object->SetMaterial(2, c2Mat);
 
     // set shader texture width param
-    Texture* texture = clMat->GetTexture(TU_ENVIRONMENT);
+    Texture* texture = c1Mat->GetTexture(TU_ENVIRONMENT);
     if (texture)
     {
-        clMat->SetShaderParameter("TextureSize", (float)texture->GetWidth());
+        c1Mat->SetShaderParameter("TextureSize", (float)texture->GetWidth());
+        c2Mat->SetShaderParameter("TextureSize", (float)texture->GetWidth());
     }
 
     object->SetCastShadows(true);
@@ -262,10 +264,10 @@ void CharacterDemo::SubscribeToEvents()
 void CharacterDemo::HandleLPStatusEvent(StringHash eventType, VariantMap& eventData)
 {
     using namespace LightProbeStatus;
-    unsigned initCnt = eventData[P_INITIAL].GetUInt();
+    unsigned totalCnt = eventData[P_TOTAL].GetUInt();
     unsigned completeCnt = eventData[P_COMPLETED].GetUInt();
 
-    if (initCnt == completeCnt)
+    if (totalCnt == completeCnt)
     {
         float elapsed = (float)((long)hrTimer_.GetUSec(false))/1000.0f;
         char buff[30];
@@ -281,7 +283,7 @@ void CharacterDemo::HandleLPStatusEvent(StringHash eventType, VariantMap& eventD
     }
     else
     {
-        instructionText_->SetText(ToString("light probes complete: %u/%u", completeCnt, initCnt));
+        instructionText_->SetText(ToString("light probes complete: %u/%u", completeCnt, totalCnt));
     }
 }
 
