@@ -128,7 +128,7 @@ private:
     static Mutex sphDataLock_;
 
     // static methods
-    static void SetupUnitBoxGeom(Model *model);
+    static void SetupUnitBoxGeom(Context *context);
     static int SetupSphericalData(const Vector<SharedPtr<Image> > &cubeImages, PODVector<Vector3> &coeffVec);
     static int CalculateSH(const Vector<SharedPtr<Image> > &cubeImages, PODVector<Vector3> &coeffVec);
     static void UpdateCoeffs(const Vector3 &vcol, const Vector3 &v, PODVector<Vector3> &coeffVec);
@@ -171,7 +171,7 @@ private:
 
     //=============================================================================
     // **note: another proportinal comparator - the sum of the three segment areas is equal to the 
-    // area of triangle, hence you can also conclude that the sum of the barycentric is equal to one, if it's inside the triangle
+    // area of triangle, hence you can also prove that the sum of the barycentric is equal to one, if it's inside the triangle
     //=============================================================================
     static inline bool BaryInsideTriangle(const Vector3 &bary)
     {

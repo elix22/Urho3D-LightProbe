@@ -50,6 +50,7 @@ public:
     virtual ~LightProbeCreator();
 
     void Init(Scene *scene, const String& basepath);
+    void SetOutputFilename(const String &outputFilename);
     void GenerateLightProbes();
     int GetSHProbeTextureWidth() const { return shProbeTextureWidth_; }
 
@@ -69,6 +70,7 @@ protected:
     WeakPtr<Scene> scene_;
     String programPath_;
     String basepath_;
+    String outputFilename_;
     int shProbeTextureWidth_;
     float worldPreScaler_;
 

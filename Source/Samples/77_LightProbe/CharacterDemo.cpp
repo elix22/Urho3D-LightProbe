@@ -140,9 +140,10 @@ void CharacterDemo::CreateScene()
             instructionText_->SetText("building");
         }
 
-        // init and start lp creator
+        // init lp creator
         LightProbeCreator *lightProbeCreator = GetSubsystem<LightProbeCreator>();
         lightProbeCreator->Init(scene_, "Data/LightProbe");
+        lightProbeCreator->SetOutputFilename(GetSubsystem<FileSystem>()->GetProgramDir() + "Data/LightProbe/Textures/SHprobeData.png");
 
         // start the timer and go
         hrTimer_.Reset();

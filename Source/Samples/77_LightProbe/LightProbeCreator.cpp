@@ -55,16 +55,19 @@ LightProbeCreator::~LightProbeCreator()
 
 void LightProbeCreator::Init(Scene *scene, const String& basepath)
 {
-    ResourceCache* cache = GetSubsystem<ResourceCache>();
-
     // all lightprobes use the default unit box - parse it
-    LightProbe::SetupUnitBoxGeom(cache->GetResource<Model>("Models/Box.mdl"));
+    LightProbe::SetupUnitBoxGeom(context_);
 
     scene_ = scene;
     programPath_ = GetSubsystem<FileSystem>()->GetProgramDir();
     basepath_ = basepath;
 
     SubscribeToEvent(E_SHBUILDDONE, URHO3D_HANDLER(LightProbeCreator, HandleBuildEvent));
+}
+
+void LightProbeCreator::SetOutputFilename(const String &outputFilename)
+{
+    outputFilename_ = outputFilename;
 }
 
 void LightProbeCreator::GenerateLightProbes()
@@ -130,7 +133,17 @@ void LightProbeCreator::WriteSHTableImage()
             image->SetPixel((i * 9) + j, 0, Color(c.x_, c.y_, c.z_));
         }
     }
-    image->SavePNG(programPath_ + basepath_ + "/Textures/SHprobeData.png");
+
+    // save file
+    if (!outputFilename_.Empty())
+    {
+        image->SaveFile(outputFilename_);
+    }
+    else
+    {
+        // default
+        image->SavePNG(programPath_ + basepath_ + "/Textures/SHprobeData.png");
+    }
 }
 
 Vector4 LightProbeCreator::WorldPositionToColor(const Vector3 &wpos) const

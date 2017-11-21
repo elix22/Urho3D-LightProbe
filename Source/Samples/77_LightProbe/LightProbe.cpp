@@ -232,8 +232,10 @@ void LightProbe::DumpSHCoeff()
 //=============================================================================
 // static fns below this pt
 //=============================================================================
-void LightProbe::SetupUnitBoxGeom(Model *model)
+void LightProbe::SetupUnitBoxGeom(Context *context)
 {
+    ResourceCache* cache = context->GetSubsystem<ResourceCache>();
+    Model *model = cache->GetResource<Model>("Models/Box.mdl");
     Geometry *geometry = model->GetGeometry(0, 0);
     VertexBuffer *vbuffer = geometry->GetVertexBuffer(0);
     const unsigned char *vertexData = (const unsigned char*)vbuffer->Lock(0, vbuffer->GetVertexCount());
