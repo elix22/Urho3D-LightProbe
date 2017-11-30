@@ -2,7 +2,7 @@
   
 ---
 ### Description
-SH coefficients generated from cubemap texture and applied at run time via shader program to achieve irradiance used as light probe. Based on: An Efficient Representation for Irradiance Environment Maps,
+SH coefficients generated from cubemap texture to achieve irradiance used as light probe. Based on: An Efficient Representation for Irradiance Environment Maps,  
 ref: http://graphics.stanford.edu/papers/envmap/  
 
 There are six lightprobes in the scene that reflect some color to validate testing. You can spot them easily.  
