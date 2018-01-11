@@ -38,6 +38,7 @@ To enable coeff generation, set **generateLightProbes_=true** in the CharacterDe
 ---
 ### To Build
 To build it, unzip/drop the repository into your Urho3D/ folder and build it the same way as you'd build the default Samples that come with Urho3D.
+**Built with Urho3D 1.7 tag.**
   
 ---  
 ### License
